@@ -1,0 +1,25 @@
+[project]
+name = "worldcup-backtest"
+version = "0.1.0"
+description = "World Cup 2026 prediction backtest — prior model vs market, proper scoring"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.12",
+    "httpx>=0.27",
+    "scikit-learn>=1.4",   # multinomial logistic regression for the prior
+    "matplotlib>=3.8",     # reliability-diagram PNGs (§10); spec mandates plots
+]
+
+[project.scripts]
+wcbt = "cli:main"
+
+[tool.uv]
+package = false
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+# Plain script layout: src/ is on sys.path via the CLI shim, no install needed.
