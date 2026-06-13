@@ -1,0 +1,69 @@
+name: snapshot-market
+
+# Poll Polymarket and snapshot pre-match prices for any fixture kicking off soon.
+# Built for GitHub Actions' delayed/skipped runs: the snapshot WINDOW (~90 min) +
+# insert-once idempotency mean a missed or late run self-heals on the next one,
+# as long as kickoff hasn't passed. Do NOT assume on-time execution.
+#
+# All timing keys off the stored Polymarket gameStartTime (UTC), never the slug
+# date — see src/scheduler.py. GitHub cron is UTC, which matches.
+#
+# Alerting: there is no Resend here on purpose. If a fixture is still uncaptured
+# within ~30 min of kickoff, `snapshot-due` exits non-zero and THIS WORKFLOW
+# FAILS — GitHub emails you on a failed run, which is the alert. You then have
+# time to hand-enter the price via `load-market` before kickoff.
+
+on:
+  schedule:
+    # every 30 minutes; frequent enough that the ~90-min window catches every
+    # staggered kickoff even when a run is delayed or skipped under load.
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}        # allow manual runs
+
+# Serialize runs so two overlapping snapshots never race on the commit/push.
+concurrency:
+  group: snapshot-market
+  cancel-in-progress: false
+
+permissions:
+  contents: write              # needed to commit the updated DB back
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: uv pip install --system numpy pandas scipy httpx scikit-learn matplotlib
+
+      - name: Snapshot due fixtures and persist
+        run: |
+          set +e
+          PYTHONPATH=src python src/cli.py snapshot-due
+          RC=$?
+          set -e
+          echo "snapshot-due exit code: $RC"
+
+          # Persist any captured prices back to the repo so the next run sees
+          # them (insert-once is meaningless if the DB is thrown away each run).
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet -- data/backtest.db; then
+            git add data/backtest.db
+            git commit -m "snapshot: market prices $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            # rebase on any concurrent change, then push
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          else
+            echo "no DB changes to commit"
+          fi
+
+          # Surface the alert AFTER persisting good captures: a non-zero exit
+          # fails the workflow, which is the email alert.
+          exit $RC
