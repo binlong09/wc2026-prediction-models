@@ -39,13 +39,13 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: uv pip install --system numpy pandas scipy httpx scikit-learn matplotlib
-
+      # Dependencies are resolved from pyproject.toml into uv's project
+      # environment by `uv run` below. Do NOT `uv pip install --system`: the
+      # runner's system Python is PEP-668 externally-managed and rejects it.
       - name: Snapshot due fixtures and persist
         run: |
           set +e
-          PYTHONPATH=src python src/cli.py snapshot-due
+          PYTHONPATH=src uv run python src/cli.py snapshot-due
           RC=$?
           set -e
           echo "snapshot-due exit code: $RC"
