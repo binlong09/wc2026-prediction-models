@@ -42,6 +42,24 @@ assert config.db_path() != config.DB_PATH and "sl.db" in str(config.db_path())
 _GOALS = {"team1_win": (2, 0), "draw": (1, 1), "team2_win": (0, 2)}
 
 
+def _real_log_count():
+    """match_log rows in the REAL DB — snapshotted to prove the isolated run
+    never writes there. Compared before/after (robust now that the live pipeline
+    legitimately populates match_log)."""
+    if not config.DB_PATH.exists():
+        return 0
+    rc = db.connect(config.DB_PATH)
+    try:
+        if not rc.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='match_log'").fetchone()[0]:
+            return 0
+        return rc.execute("SELECT COUNT(*) FROM match_log").fetchone()[0]
+    finally:
+        rc.close()
+
+
+_REAL_LOG_BEFORE = _real_log_count()
+
+
 def main() -> int:
     build.build_elo()
     market.load_market(1)  # vig-stripped market for the G–L round-1 fixtures
@@ -119,16 +137,9 @@ def main() -> int:
     assert (config.REPORT / "scorelog.png").exists(), "scorelog.png missing"
 
     # 6) Real DB untouched.
-    if config.DB_PATH.exists():
-        rc = db.connect(config.DB_PATH)
-        has_log = rc.execute(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='match_log'"
-        ).fetchone()[0]
-        real_logged = (
-            rc.execute("SELECT COUNT(*) FROM match_log").fetchone()[0] if has_log else 0
-        )
-        rc.close()
-        assert real_logged == 0, "REAL DB match_log was contaminated!"
+    assert _real_log_count() == _REAL_LOG_BEFORE, (
+        f"REAL DB match_log changed: before={_REAL_LOG_BEFORE} after={_real_log_count()}"
+    )
 
     print("\ntest_scorelog: PASS ✓")
     print(f"  logged={n_logged}, scored={n_scored}, market-bearing immutable rows={len(snap)}")
