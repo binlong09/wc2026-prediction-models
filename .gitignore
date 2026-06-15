@@ -17,10 +17,10 @@ report/*
 # OS noise
 .DS_Store
 
-# NOTE: data/backtest.db IS tracked on purpose — it holds the resolved
-# market_map the scheduler reads, and the snapshot-market workflow commits
-# captured prices back to it. Remove from tracking with `git rm --cached
-# data/backtest.db` if you'd rather persist snapshots elsewhere.
+# The SQLite DB is a REBUILDABLE WORKING FILE — not committed. The durable,
+# irreplaceable state lives as human-readable CSVs in data/state/ (committed);
+# `cli.py rebuild` reconstructs the DB from those + external fetches.
+data/backtest.db
 
 # Real hand-entered market CSVs stay local; only the .example template is tracked
 data/market/matchday_*.csv

@@ -18,6 +18,7 @@ import market
 import report
 import scheduler
 import scorelog
+import state
 from backtest import run_backtest
 
 
@@ -54,6 +55,10 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("report", help="regenerate static report grid + reliability PNGs + companion.json")
     sub.add_parser("export-companion", help="write report/companion.json for the companion app")
 
+    sub.add_parser("export-state", help="dump durable state (market_map/snapshots/match_log) to data/state/*.csv")
+    sub.add_parser("import-state", help="apply committed data/state/*.csv onto the DB (after build-elo)")
+    sub.add_parser("rebuild", help="reconstruct the working DB: fetch + build-elo + import-state + refresh-results")
+
     sub.add_parser("log-predictions",
                    help="capture immutable pre-match model + market probs for upcoming matches")
     sub.add_parser("score-log", help="retrospectively score logged matches that now have results")
@@ -83,6 +88,18 @@ def main(argv: list[str] | None = None) -> int:
         fetch.fetch_all()
         build.refresh_results()
         scorelog.score_log()  # score any logged matches that just finished
+    elif args.cmd == "export-state":
+        state.export_state()
+    elif args.cmd == "import-state":
+        state.import_state()
+    elif args.cmd == "rebuild":
+        # reconstruct the working DB from committed text state + external sources
+        fetch.fetch_all()
+        db.init_db()
+        build.build_elo()
+        state.import_state()
+        build.refresh_results()
+        scorelog.score_log()
     elif args.cmd == "backtest":
         run_backtest()
     elif args.cmd == "report":

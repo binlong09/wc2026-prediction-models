@@ -24,7 +24,7 @@ on:
 
 # Serialize runs so two overlapping snapshots never race on the commit/push.
 # Shared with refresh-backtest.yml so the two workflows never write/push
-# data/backtest.db concurrently (a binary file can't be rebase-merged).
+# the committed text state concurrently.
 concurrency:
   group: wc2026-market-db
   cancel-in-progress: false
@@ -49,6 +49,10 @@ jobs:
       - name: Snapshot due fixtures, backfill misses, log predictions, and persist
         run: |
           set +e
+          # 0) reconstruct the working DB from the committed text state + external
+          #    sources (the binary DB is NOT committed). This restores prior
+          #    captures so insert-once has something to find.
+          PYTHONPATH=src uv run python src/cli.py rebuild
           # 1) live capture for any fixture inside the pre-kickoff window
           PYTHONPATH=src uv run python src/cli.py snapshot-due
           RC=$?            # only the actionable pre-kickoff alert drives the run's exit code
@@ -64,21 +68,23 @@ jobs:
           #    kickoff. This populates the companion's per-match model numbers and
           #    the scorelog. Does not affect the run's exit code.
           PYTHONPATH=src uv run python src/cli.py log-predictions || true
+          # 4) dump the durable state back to the committed CSVs (deterministic).
+          PYTHONPATH=src uv run python src/cli.py export-state
           set -e
           echo "snapshot-due exit code: $RC"
 
-          # Persist any captured/recovered prices back to the repo so the next
-          # run sees them (insert-once is meaningless if the DB is thrown away).
+          # Persist captured/recovered prices as TEXT so the next run sees them.
+          # The CSVs are deterministic, so a plain git-diff is a reliable
+          # commit-on-change gate (no binary churn).
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if ! git diff --quiet -- data/backtest.db; then
-            git add data/backtest.db
-            git commit -m "snapshot: market prices $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            # rebase on any concurrent change, then push
+          if ! git diff --quiet -- data/state/; then
+            git add data/state/
+            git commit -m "snapshot: market state $(date -u +%Y-%m-%dT%H:%M:%SZ)"
             git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
             git push origin "HEAD:${GITHUB_REF_NAME}"
           else
-            echo "no DB changes to commit"
+            echo "no state changes to commit"
           fi
 
           # Surface the alert AFTER persisting good captures: a non-zero exit

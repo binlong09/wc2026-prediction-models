@@ -20,7 +20,7 @@ on:
     - cron: "5 7,19 * * *"     # 07:05 and 19:05 UTC, ~twice a day
   workflow_dispatch: {}
 
-# Shared with snapshot-market so the two jobs never write/push data/backtest.db
+# Shared with snapshot-market so the two jobs never write/push the committed text state
 # concurrently (a binary file can't be rebase-merged). Serialized, not cancelled.
 concurrency:
   group: wc2026-market-db
@@ -42,33 +42,19 @@ jobs:
 
       - name: Refresh results, backtest, report — commit only on real change
         run: |
-          # Semantic signature of the analysis-bearing tables (stable across
-          # re-runs for the same data; excludes run_id/created_at/captured_at).
+          # Content signature over the COMMITTED TEXT artifacts: the durable
+          # state CSVs (deterministic) + companion.json with its generated_at
+          # timestamp removed (that changes every run). A real data change moves
+          # the signature; a no-op run (only a fresh timestamp) does not.
           sig() {
             PYTHONPATH=src uv run --quiet python - <<'PY'
-import hashlib, db
-c = db.connect()
+import hashlib, json, os, glob
 parts = []
-for q in (
-    "SELECT match_id,actual_result,actual_goals1,actual_goals2,"
-    "model_pW1,model_pD,model_pW2 FROM matches ORDER BY match_id",
-    "SELECT version,matchday,split,brier_model,logloss_model,brier_market,"
-    "logloss_market,skill_brier,skill_logloss,skill_brier_lo,skill_brier_hi,"
-    "skill_logloss_lo,skill_logloss_hi,n FROM runs ORDER BY version,matchday,split",
-    "SELECT version,match_id,split,pW1,pD,pW2,temperature FROM predictions "
-    "ORDER BY version,match_id",
-    "SELECT version,match_id,actual_result,brier_model,logloss_model,"
-    "brier_market,logloss_market FROM match_log ORDER BY version,match_id",
-):
-    for row in c.execute(q):
-        parts.append("|".join("" if v is None else str(v) for v in row))
-# Fold in the published companion.json (minus the generated_at timestamp, which
-# changes every run) so a real change to it also triggers a commit — but a no-op
-# run with only a fresh timestamp does not.
-import json, os
-p = "report/companion.json"
-if os.path.exists(p):
-    d = json.load(open(p)); d.pop("generated_at", None)
+for p in sorted(glob.glob("data/state/*.csv")):
+    parts.append(open(p).read())
+cj = "report/companion.json"
+if os.path.exists(cj):
+    d = json.load(open(cj)); d.pop("generated_at", None)
     parts.append(json.dumps(d, sort_keys=True, ensure_ascii=False))
 print(hashlib.sha256("\n".join(parts).encode()).hexdigest())
 PY
@@ -76,26 +62,28 @@ PY
 
           BEFORE=$(sig)
 
-          # The three steps. refresh-results auto-runs score-log; backtest and
-          # report no-op gracefully when no round is fully played.
           set +e
-          PYTHONPATH=src uv run python src/cli.py refresh-results
+          # rebuild the working DB from committed text + external sources, then
+          # run the backtest and regenerate the report + companion.json. backtest
+          # and report no-op gracefully when no round is fully played.
+          PYTHONPATH=src uv run python src/cli.py rebuild
           PYTHONPATH=src uv run python src/cli.py backtest
           PYTHONPATH=src uv run python src/cli.py report
+          PYTHONPATH=src uv run python src/cli.py export-state
           set -e
 
           AFTER=$(sig)
 
           if [ "$BEFORE" = "$AFTER" ]; then
-            echo "No new results/backtest output this run — discarding byte-churn, no commit."
-            git checkout -- data/backtest.db || true
+            echo "No published-content change this run — discarding, no commit."
+            git checkout -- data/state report/companion.json 2>/dev/null || true
             exit 0
           fi
 
-          echo "Results/backtest/companion changed — committing."
+          echo "Results / companion changed — committing."
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/backtest.db report/companion.json
+          git add data/state report/companion.json
           git commit -m "results: refresh + backtest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
           git push origin "HEAD:${GITHUB_REF_NAME}"

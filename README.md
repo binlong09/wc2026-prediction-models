@@ -136,12 +136,17 @@ worldcup-backtest/
   pyproject.toml        # py3.12 / uv
   README.md
   data/
-    raw/                # fetched: international_results.csv, worldcup_2026.json
+    raw/                # fetched: international_results.csv, worldcup_2026.json (gitignored)
     market/             # hand-entered market probs (one CSV per round) + template
-    backtest.db         # SQLite (created by build-elo)
+    state/              # COMMITTED durable state as readable CSVs (the source of truth)
+      market_map.csv        # fixture -> Polymarket token mapping (+ kickoff)
+      market_snapshots.csv  # the pre-match prices captured before kickoff
+      match_log.csv         # immutable pre-match model + market log (scorelog basis)
+    backtest.db         # SQLite WORKING file — rebuilt by `cli.py rebuild`, NOT committed
   src/
     config.py           # paths + tunables (Elo K/H, bootstrap, host nations)
     db.py               # SQLite schema (§5) + connection helper
+    state.py            # export-state / import-state: durable state <-> data/state/*.csv
     fetch.py            # pull the two raw sources
     elo.py              # chronological Elo engine -> elo_pre + history features
     model.py            # Model Protocol + v1 multinomial-logit prior (frozen)
@@ -172,6 +177,7 @@ worldcup-backtest/
     test_scheduler.py   # ISOLATED window + past-kickoff guard + TZ-artifact + alert exit
     test_backfill.py    # ISOLATED (stubbed API) prices-history recovery, pre-kickoff only
     test_export.py      # ISOLATED companion.json schema (predictions + scored + scorelog)
+    test_state.py       # ISOLATED text-state export/import round-trip + determinism
 ```
 
 All tests are self-isolating (throwaway DB via `WCBT_DB`, redirected report dir)
@@ -185,8 +191,25 @@ PYTHONPATH=src python tests/test_fetch_market.py  # market_map + de-vig + insert
 PYTHONPATH=src python tests/test_scheduler.py     # window + past-kickoff guard + TZ-artifact + alert
 PYTHONPATH=src python tests/test_backfill.py      # prices-history recovery (stubbed API)
 PYTHONPATH=src python tests/test_export.py        # companion.json schema
+PYTHONPATH=src python tests/test_state.py         # text-state round-trip + determinism
 PYTHONPATH=src python tests/smoke_test.py         # full simulated tournament
 ```
+
+### Persistence: text, not binary
+
+The SQLite DB is a **rebuildable working file** — it is *not* committed. The
+durable, irreplaceable state (the resolved token map, the captured pre-match
+prices, the immutable match log) is committed as **human-readable CSVs** in
+`data/state/`, so the git history is diffable and auditable. Everything else
+(Elo, fixtures, results, the backtest grid, `companion.json`) is regenerated from
+external sources + computation. To reconstruct the working DB locally:
+
+```bash
+PYTHONPATH=src python src/cli.py rebuild   # fetch + build-elo + import-state + refresh-results
+```
+
+The cron workflows do this at the start of every run, then `export-state` the
+durable CSVs back (deterministic → clean git diffs, no binary churn).
 
 > Two small deviations from the spec's §3 layout, both for clarity: the Elo
 > engine lives in its own `elo.py` (the spec folds it into `fetch.py`), and
@@ -369,16 +392,18 @@ PYTHONPATH=src python src/cli.py snapshot-due --now 2026-06-14T03:00:00+00:00   
   recovers it from price history after the fact.
 
 The workflow is [`.github/workflows/snapshot-market.yml`](.github/workflows/snapshot-market.yml):
-cron `*/30 * * * *`, installs deps with uv, runs `snapshot-due` (live capture)
-**then `backfill-market`** (recover any past-kickoff misses from price history),
-commits the updated `data/backtest.db` back so prices persist across the ephemeral
-runners (insert-once is meaningless if the DB is discarded each run), and finally
-propagates `snapshot-due`'s exit code so a pre-kickoff alert fails the run.
-Running both each tick makes the pipeline **fully self-healing** — a missed or
-skipped run is recovered next tick (live if still pre-kickoff, from history if
-not); backfill failures don't fail the run (they retry next tick). It needs the
-committed DB to already have `build-elo` + `verify-market-map` done (a one-time
-local step you commit). Read-only price collection only — no auth, no trading.
+cron `*/30 * * * *`, installs deps with uv, **`rebuild`s the working DB from the
+committed text state + external sources**, runs `snapshot-due` (live capture)
+**then `backfill-market`** (recover past-kickoff misses) **then `log-predictions`**,
+`export-state`s the durable state back to `data/state/*.csv`, and commits those
+CSVs (deterministic text → plain git-diff gate, no binary churn) so captures
+persist across the ephemeral runners. It finally propagates `snapshot-due`'s exit
+code so a pre-kickoff alert fails the run. Running these each tick makes the
+pipeline **fully self-healing** — a missed or skipped run is recovered next tick
+(live if still pre-kickoff, from history if not); backfill failures don't fail the
+run (they retry next tick). The committed `data/state/market_map.csv` must already
+be resolved (`build-elo` + `verify-market-map` once, locally, committed). Read-only
+price collection only — no auth, no trading.
 
 ### Recovering a missed price (`backfill-market`)
 
