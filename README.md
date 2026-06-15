@@ -155,11 +155,14 @@ worldcup-backtest/
     polymarket.py       # read-only Gamma+CLOB client (incl. prices-history) + resolver
     fetch_market.py     # verify-market-map + fetch-market + backfill-market (addendum §1-2)
     scheduler.py        # snapshot-due: kickoff-window polling + guards + alert (addendum §3-5)
+    export.py           # export-companion: write report/companion.json (companion-spec §3)
     cli.py              # ...+ verify-market-map/fetch-market/backfill-market/snapshot-due/
-                        #   log-predictions/score-log/scorelog
+                        #   log-predictions/score-log/scorelog/export-companion
+  report/
+    companion.json      # PUBLISHED data contract the companion app fetches (committed; rest of report/ is local)
   .github/workflows/
     snapshot-market.yml # 30-min cron: snapshot-due + backfill-market, commit on change
-    refresh-backtest.yml# 2x/day cron: refresh-results -> backtest -> report, commit on change
+    refresh-backtest.yml# 2x/day cron: refresh-results -> backtest -> report (+ companion.json), commit on change
   tests/
     smoke_test.py       # ISOLATED end-to-end backtest on a simulated tournament (v1+v2)
     test_versions.py    # ISOLATED v1≡v2 round-1 invariant + v2-diverges-at-round-2

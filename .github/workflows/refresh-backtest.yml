@@ -62,6 +62,14 @@ for q in (
 ):
     for row in c.execute(q):
         parts.append("|".join("" if v is None else str(v) for v in row))
+# Fold in the published companion.json (minus the generated_at timestamp, which
+# changes every run) so a real change to it also triggers a commit — but a no-op
+# run with only a fresh timestamp does not.
+import json, os
+p = "report/companion.json"
+if os.path.exists(p):
+    d = json.load(open(p)); d.pop("generated_at", None)
+    parts.append(json.dumps(d, sort_keys=True, ensure_ascii=False))
 print(hashlib.sha256("\n".join(parts).encode()).hexdigest())
 PY
           }
@@ -79,15 +87,15 @@ PY
           AFTER=$(sig)
 
           if [ "$BEFORE" = "$AFTER" ]; then
-            echo "No new results/backtest output this run — discarding DB byte-churn, no commit."
+            echo "No new results/backtest output this run — discarding byte-churn, no commit."
             git checkout -- data/backtest.db || true
             exit 0
           fi
 
-          echo "Results/backtest changed — committing."
+          echo "Results/backtest/companion changed — committing."
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/backtest.db
+          git add data/backtest.db report/companion.json
           git commit -m "results: refresh + backtest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
           git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
           git push origin "HEAD:${GITHUB_REF_NAME}"

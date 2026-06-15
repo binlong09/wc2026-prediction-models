@@ -11,6 +11,7 @@ import sys
 
 import build
 import db
+import export
 import fetch
 import fetch_market as fm
 import market
@@ -50,7 +51,8 @@ def main(argv: list[str] | None = None) -> int:
 
     sub.add_parser("refresh-results", help="re-fetch + update actual_* (then auto score-log)")
     sub.add_parser("backtest", help="run the train/test loop over rounds with results")
-    sub.add_parser("report", help="regenerate static report grid + reliability PNGs")
+    sub.add_parser("report", help="regenerate static report grid + reliability PNGs + companion.json")
+    sub.add_parser("export-companion", help="write report/companion.json for the companion app")
 
     sub.add_parser("log-predictions",
                    help="capture immutable pre-match model + market probs for upcoming matches")
@@ -85,6 +87,9 @@ def main(argv: list[str] | None = None) -> int:
         run_backtest()
     elif args.cmd == "report":
         report.make_report()
+        export.export_companion()  # regenerate companion.json alongside the report
+    elif args.cmd == "export-companion":
+        export.export_companion()
     elif args.cmd == "log-predictions":
         scorelog.log_predictions()
     elif args.cmd == "score-log":
