@@ -45,20 +45,10 @@ jobs:
           # Content signature over the COMMITTED TEXT artifacts: the durable
           # state CSVs (deterministic) + companion.json with its generated_at
           # timestamp removed (that changes every run). A real data change moves
-          # the signature; a no-op run (only a fresh timestamp) does not.
-          sig() {
-            PYTHONPATH=src uv run --quiet python - <<'PY'
-import hashlib, json, os, glob
-parts = []
-for p in sorted(glob.glob("data/state/*.csv")):
-    parts.append(open(p).read())
-cj = "report/companion.json"
-if os.path.exists(cj):
-    d = json.load(open(cj)); d.pop("generated_at", None)
-    parts.append(json.dumps(d, sort_keys=True, ensure_ascii=False))
-print(hashlib.sha256("\n".join(parts).encode()).hexdigest())
-PY
-          }
+          # the signature; a no-op run (only a fresh timestamp) does not. The
+          # logic lives in scripts/content_sig.py — inline Python in a YAML block
+          # scalar must stay indented, which Python forbids at top level.
+          sig() { uv run --quiet python scripts/content_sig.py; }
 
           BEFORE=$(sig)
 
