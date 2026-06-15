@@ -16,17 +16,25 @@ betting or execution logic here, by design.
 
 ---
 
-## Status: v1 + v2 complete
+## Status: v1 + v2 complete; pipeline live and self-running
+
+The tournament is underway and the pipeline runs itself on GitHub Actions: a
+30-minute job snapshots pre-match market prices (live, with automatic backfill of
+any misses from price history), and a twice-daily job pulls new results, re-runs
+the backtest, and regenerates the report — each committing back only when
+something actually changed. The {v1,v2}-vs-market grid fills in automatically as
+group rounds complete (it's empty until the first round's two halves are both
+fully played).
 
 This build implements **v1 and v2**, end to end: fetch → Elo engine →
 multinomial-logit prior → temperature calibration → proper scoring → the
 per-matchday backtest loop → static report. It also adds a **model-vs-market
 scorekeeper** (`match_log` + the `scorelog` report) and an **automated read-only
-market snapshot** from Polymarket — both the manual `fetch-market` (Stage 1) and
-the polling **scheduler** `snapshot-due` + GitHub Actions cron (Stage 2). v3 (v2 +
-suspensions) is **intentionally not built yet** — the `Model` Protocol and the
-version-agnostic loop are shaped so it slots in later without reworking the
-pipeline. See [Roadmap](#roadmap--out-of-scope).
+market snapshot** from Polymarket — the manual `fetch-market` (Stage 1), the
+polling **scheduler** `snapshot-due` + cron (Stage 2), and `backfill-market`
+recovery. v3 (v2 + suspensions) is **intentionally not built yet** — the `Model`
+Protocol and the version-agnostic loop are shaped so it slots in later without
+reworking the pipeline. See [Roadmap](#roadmap--out-of-scope).
 
 - **v1 — frozen prior.** `update` is a no-op; ratings never move. The baseline.
 - **v2 — sequential Elo updating.** `update` folds a completed round's 24 results
@@ -82,10 +90,11 @@ PYTHONPATH=src python src/cli.py refresh-results  # updates results AND auto-sco
 PYTHONPATH=src python src/cli.py scorelog         # running model-vs-market comparison -> report/
 ```
 
-**Right now (mid-tournament, only a few games played) the backtest correctly
-reports that no complete round is scorable yet.** To see the full pipeline run
-end to end on a *simulated* complete tournament — in a throwaway DB that never
-touches real data — run the isolated smoke test:
+**Until a group round's two halves are both fully played, the backtest correctly
+reports that no complete round is scorable yet** — and the cron jobs commit
+nothing on those runs. To see the full pipeline run end to end on a *simulated*
+complete tournament — in a throwaway DB that never touches real data — run the
+isolated smoke test:
 
 ```bash
 PYTHONPATH=src python tests/smoke_test.py
@@ -149,7 +158,8 @@ worldcup-backtest/
     cli.py              # ...+ verify-market-map/fetch-market/backfill-market/snapshot-due/
                         #   log-predictions/score-log/scorelog
   .github/workflows/
-    snapshot-market.yml # cron poll -> snapshot-due, commits captures back (Stage 2)
+    snapshot-market.yml # 30-min cron: snapshot-due + backfill-market, commit on change
+    refresh-backtest.yml# 2x/day cron: refresh-results -> backtest -> report, commit on change
   tests/
     smoke_test.py       # ISOLATED end-to-end backtest on a simulated tournament (v1+v2)
     test_versions.py    # ISOLATED v1≡v2 round-1 invariant + v2-diverges-at-round-2

@@ -23,8 +23,10 @@ on:
   workflow_dispatch: {}        # allow manual runs
 
 # Serialize runs so two overlapping snapshots never race on the commit/push.
+# Shared with refresh-backtest.yml so the two workflows never write/push
+# data/backtest.db concurrently (a binary file can't be rebase-merged).
 concurrency:
-  group: snapshot-market
+  group: wc2026-market-db
   cancel-in-progress: false
 
 permissions:

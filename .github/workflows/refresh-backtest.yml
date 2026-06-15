@@ -1,0 +1,93 @@
+name: refresh-backtest
+
+# Close the loop: pull newly-finished results, re-run the backtest, regenerate the
+# report — twice a day. The market side (snapshot-market.yml) runs every 30 min;
+# this is the slower analysis side.
+#
+# Commit-on-change discipline (mirrors the snapshot job): backtest/refresh churn
+# the SQLite file's bytes even on a no-op (re-running DELETE/UPDATE with identical
+# values), so a raw `git diff` would produce empty "update report" commits. We
+# instead gate the commit on a SEMANTIC signature of the meaningful tables
+# (results + runs + predictions + match_log scores), excluding the
+# non-deterministic run_id/created_at. No new round completed -> identical
+# signature -> discard byte-churn, no commit, clean exit.
+#
+# refresh-results already auto-runs score-log, so the scorelog updates as a side
+# effect — we don't re-wire scoring here. Read-only on the data sources.
+
+on:
+  schedule:
+    - cron: "5 7,19 * * *"     # 07:05 and 19:05 UTC, ~twice a day
+  workflow_dispatch: {}
+
+# Shared with snapshot-market so the two jobs never write/push data/backtest.db
+# concurrently (a binary file can't be rebase-merged). Serialized, not cancelled.
+concurrency:
+  group: wc2026-market-db
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Refresh results, backtest, report — commit only on real change
+        run: |
+          # Semantic signature of the analysis-bearing tables (stable across
+          # re-runs for the same data; excludes run_id/created_at/captured_at).
+          sig() {
+            PYTHONPATH=src uv run --quiet python - <<'PY'
+import hashlib, db
+c = db.connect()
+parts = []
+for q in (
+    "SELECT match_id,actual_result,actual_goals1,actual_goals2,"
+    "model_pW1,model_pD,model_pW2 FROM matches ORDER BY match_id",
+    "SELECT version,matchday,split,brier_model,logloss_model,brier_market,"
+    "logloss_market,skill_brier,skill_logloss,skill_brier_lo,skill_brier_hi,"
+    "skill_logloss_lo,skill_logloss_hi,n FROM runs ORDER BY version,matchday,split",
+    "SELECT version,match_id,split,pW1,pD,pW2,temperature FROM predictions "
+    "ORDER BY version,match_id",
+    "SELECT version,match_id,actual_result,brier_model,logloss_model,"
+    "brier_market,logloss_market FROM match_log ORDER BY version,match_id",
+):
+    for row in c.execute(q):
+        parts.append("|".join("" if v is None else str(v) for v in row))
+print(hashlib.sha256("\n".join(parts).encode()).hexdigest())
+PY
+          }
+
+          BEFORE=$(sig)
+
+          # The three steps. refresh-results auto-runs score-log; backtest and
+          # report no-op gracefully when no round is fully played.
+          set +e
+          PYTHONPATH=src uv run python src/cli.py refresh-results
+          PYTHONPATH=src uv run python src/cli.py backtest
+          PYTHONPATH=src uv run python src/cli.py report
+          set -e
+
+          AFTER=$(sig)
+
+          if [ "$BEFORE" = "$AFTER" ]; then
+            echo "No new results/backtest output this run — discarding DB byte-churn, no commit."
+            git checkout -- data/backtest.db || true
+            exit 0
+          fi
+
+          echo "Results/backtest changed — committing."
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/backtest.db
+          git commit -m "results: refresh + backtest $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME}" || true
+          git push origin "HEAD:${GITHUB_REF_NAME}"
