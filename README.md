@@ -339,10 +339,14 @@ PYTHONPATH=src python src/cli.py snapshot-due --now 2026-06-14T03:00:00+00:00   
   run is recovered by the next one — as long as kickoff hasn't passed. Built for
   GitHub Actions' delayed/skipped runs, not on-time execution.
 - **Alert (no Resend):** if a fixture is still uncaptured within
-  `SNAPSHOT_ALERT_MIN` (default 30) of kickoff — or just past it, within
-  `SNAPSHOT_MISS_GRACE_MIN` — the run logs loudly and **exits non-zero**. The
-  workflow fails, and GitHub's failed-run email *is* the alert, giving you time to
-  hand-enter via `load-market` before kick. No new dependency.
+  `SNAPSHOT_ALERT_MIN` (default 30) **before** kickoff, the run logs loudly and
+  **exits non-zero** — the workflow fails and GitHub's failed-run email *is* the
+  alert, giving you time to hand-enter via `load-market` before kick. Only this
+  *actionable* pre-kickoff case fails the run. A fixture whose kickoff has already
+  passed uncaptured (within `SNAPSHOT_MISS_GRACE_MIN`) is a permanent miss — it's
+  logged as a loud `NOTE`, but does **not** fail the run, since a pre-match price
+  can't be recovered after kickoff and failing on it would only be non-actionable
+  alert noise.
 
 The workflow is [`.github/workflows/snapshot-market.yml`](.github/workflows/snapshot-market.yml):
 cron `*/30 * * * *`, installs deps with uv, runs `snapshot-due`, then commits the

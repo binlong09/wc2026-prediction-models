@@ -95,8 +95,10 @@ def main() -> int:
     _set_map(conn, FAR,    NOW + timedelta(days=5), date="2026-06-15")
     conn.commit()
 
+    # exit 1 is driven by the IMMINENT (pre-kickoff, T-20m) capture failure,
+    # NOT by the past-kickoff miss (which is non-actionable -> logged, exit 0).
     rc = scheduler.snapshot_due(now=NOW)
-    assert rc == 1, f"expected alert exit 1, got {rc}"
+    assert rc == 1, f"expected imminent-failure exit 1, got {rc}"
 
     assert _captured(conn, DUE), "DUE fixture (T-60m) should be captured"
     assert _captured(conn, TZ), "TZ fixture should capture on kickoff day despite earlier date"
@@ -104,7 +106,7 @@ def main() -> int:
     assert not _captured(conn, PAST), "PAST fixture must hit the hard guard"
     assert not _captured(conn, FAIL), "FAIL fixture has no price -> not captured"
     assert not _captured(conn, FAR), "FAR-future fixture dated today must NOT be captured"
-    print("Phase 1 PASS: window + past-kickoff guard + TZ-artifact correct; alert -> exit 1")
+    print("Phase 1 PASS: window + past-kickoff guard + TZ-artifact correct; imminent fail -> exit 1")
 
     # --- insert-once: second pass captures nothing new, doesn't overwrite ---
     ts_before = conn.execute(
@@ -132,6 +134,18 @@ def main() -> int:
     assert rc_clean == 0, f"clean pass should exit 0, got {rc_clean}"
     assert _captured(conn, DUE) and not _captured(conn, FAR)
     print("Phase 3 PASS: clean pass exits 0, captures only the in-window fixture")
+
+    # --- Phase 4: a past-kickoff miss alone must NOT fail the run ---
+    # (non-actionable: the pre-match price is already gone; logged, not alerted.)
+    conn.execute("DELETE FROM market_map")
+    conn.execute("UPDATE matches SET market_pW1=NULL, market_pD=NULL, market_pW2=NULL, "
+                 "market_source=NULL, market_captured_at=NULL")
+    _set_map(conn, PAST, NOW - timedelta(minutes=30))    # kicked off 30m ago, uncaptured
+    conn.commit()
+    rc_miss = scheduler.snapshot_due(now=NOW)
+    assert rc_miss == 0, f"a past-kickoff miss alone must exit 0 (non-actionable), got {rc_miss}"
+    assert not _captured(conn, PAST), "past-kickoff fixture must not be captured (hard guard)"
+    print("Phase 4 PASS: past-kickoff miss is logged but does NOT fail the run")
     conn.close()
 
     # real DB untouched

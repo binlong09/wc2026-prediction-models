@@ -118,7 +118,14 @@ def snapshot_due(
               f"(window={int(window.total_seconds()//60)}m, alert={int(alert.total_seconds()//60)}m)")
 
         captured = already = played = not_yet = no_kickoff = failed = 0
+        # alerts: ACTIONABLE pre-kickoff misses -> non-zero exit (the email).
+        #   Per the spec, the alert is "uncaptured ~30 min BEFORE kickoff" so you
+        #   can still hand-enter via load-market in time. Only these fail the run.
+        # misses: past-kickoff / played / unschedulable -> loud WARN, exit 0.
+        #   A pre-match price after kickoff is unrecoverable; failing the run on it
+        #   isn't actionable and would just spam non-actionable failure emails.
         alerts: list[str] = []
+        misses: list[str] = []
         cli = pm.client()
         try:
             for f in fixtures:
@@ -130,18 +137,18 @@ def snapshot_due(
                     # uncaptured but already played: pre-match price is gone.
                     played += 1
                     if ko is not None and now - ko <= grace:
-                        alerts.append(f"MISSED (played, uncaptured): {f.label} koff {ko.isoformat()}")
+                        misses.append(f"MISSED (played, uncaptured): {f.label} koff {ko.isoformat()}")
                     continue
                 if ko is None:
                     no_kickoff += 1
-                    alerts.append(f"NO KICKOFF in market_map: {f.label} — cannot schedule")
+                    misses.append(f"NO KICKOFF in market_map: {f.label} — cannot schedule")
                     continue
 
                 # HARD GUARD: never snapshot a fixture already kicked off.
                 if ko < now:
-                    # a permanent miss; alert while still within the grace window
+                    # permanent miss; loudly note recent ones, quietly skip old ones
                     if now - ko <= grace:
-                        alerts.append(
+                        misses.append(
                             f"MISSED (kickoff passed, uncaptured): {f.label} "
                             f"koff {ko.isoformat()} ({_mins(now - ko)}m ago)")
                     else:
@@ -161,6 +168,7 @@ def snapshot_due(
                     elif res["status"] == "failed":
                         failed += 1
                         print(f"  FAIL   {f.label}: {res['reason']}")
+                        # only actionable if still BEFORE kickoff within the horizon
                         if mins_to_ko <= alert:
                             alerts.append(f"IMMINENT, capture FAILED: {f.label} "
                                           f"kicks off in {_mins(mins_to_ko)}m")
@@ -180,10 +188,21 @@ def snapshot_due(
         print(f"snapshot-due: captured={captured} already={already} not-yet={not_yet} "
               f"played={played} failed={failed} no-kickoff={no_kickoff}")
 
+        # Recent non-actionable misses: log loudly for visibility, but do NOT
+        # fail the run (kickoff has passed — nothing to hand-enter in time).
+        if misses:
+            print("\n" + "-" * 70)
+            print(f"NOTE: {len(misses)} uncaptured fixture(s) past kickoff or unschedulable "
+                  "(not actionable — logged, run not failed):")
+            for m in misses:
+                print(f"  ~~ {m}")
+            print("-" * 70)
+
+        # Actionable pre-kickoff alerts: fail the run so the email fires in time.
         if alerts:
             print("\n" + "=" * 70)
-            print(f"ALERT: {len(alerts)} fixture(s) need attention "
-                  f"(hand-enter via `load-market` before kickoff):")
+            print(f"ALERT: {len(alerts)} fixture(s) uncaptured close to kickoff "
+                  f"(hand-enter via `load-market` BEFORE kickoff):")
             for a in alerts:
                 print(f"  !! {a}")
             print("=" * 70)

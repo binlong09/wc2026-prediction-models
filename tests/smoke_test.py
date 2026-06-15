@@ -51,6 +51,25 @@ _OUTCOMES = ["team1_win", "draw", "team2_win"]
 _GOALS = {"team1_win": (2, 0), "draw": (1, 1), "team2_win": (0, 2)}
 
 
+def _real_fingerprint():
+    """Snapshot of the real DB used to prove the synthetic run never touches it.
+    Compared before/after — robust as the tournament progresses (the real played
+    count grows toward 72 over time; a hardcoded bound would rot)."""
+    if not REAL_DB.exists():
+        return None
+    rc = db.connect(REAL_DB)
+    try:
+        return (
+            rc.execute("SELECT COUNT(*) FROM matches WHERE actual_result IS NOT NULL").fetchone()[0],
+            rc.execute("SELECT COUNT(*) FROM runs WHERE n > 0").fetchone()[0],
+        )
+    finally:
+        rc.close()
+
+
+_REAL_BEFORE = _real_fingerprint()  # captured before any synthetic work
+
+
 def main() -> int:
     # 1) Build fixtures + Elo into the temp DB (reads real raw data, read-only).
     build.build_elo()
@@ -123,17 +142,10 @@ def main() -> int:
 
     # 5) Confirm the REAL data was untouched.
     real_played = "n/a"
-    if REAL_DB.exists():
-        rc = db.connect(REAL_DB)
-        real_played = rc.execute(
-            "SELECT COUNT(*) FROM matches WHERE actual_result IS NOT NULL"
-        ).fetchone()[0]
-        real_runs_scored = rc.execute(
-            "SELECT COUNT(*) FROM runs WHERE n > 0"
-        ).fetchone()[0]
-        rc.close()
-        assert real_played <= 3, f"REAL DB was contaminated! played={real_played}"
-        assert real_runs_scored == 0, "REAL DB has scored runs — contamination!"
+    real_after = _real_fingerprint()
+    assert real_after == _REAL_BEFORE, (
+        f"REAL DB changed during the synthetic run! before={_REAL_BEFORE} after={real_after}"
+    )
 
     print("\nsmoke: PASS ✓")
     print(f"  runs rows: {n_runs}, test predictions: {n_preds}")
@@ -142,7 +154,7 @@ def main() -> int:
             f"  pooled {r['version']}: n={r['n']} skill_brier={r['skill_brier']:+.3f} "
             f"CI=[{r['skill_brier_lo']:+.3f}, {r['skill_brier_hi']:+.3f}]"
         )
-    print(f"  real DB matches-with-results still: {real_played} (uncontaminated)")
+    print(f"  real DB unchanged by smoke run: {_REAL_BEFORE} (played, scored-runs)")
     print(f"  artifacts in: {_TMP}")
     return 0
 
