@@ -1,9 +1,11 @@
 name: snapshot-market
 
-# Poll Polymarket and snapshot pre-match prices for any fixture kicking off soon.
-# Built for GitHub Actions' delayed/skipped runs: the snapshot WINDOW (~90 min) +
-# insert-once idempotency mean a missed or late run self-heals on the next one,
-# as long as kickoff hasn't passed. Do NOT assume on-time execution.
+# Poll Polymarket and snapshot pre-match prices for any fixture kicking off soon,
+# then backfill any past-kickoff misses from CLOB prices-history. Built for
+# GitHub Actions' delayed/skipped runs: the snapshot WINDOW (~90 min) + backfill +
+# insert-once idempotency make it fully self-healing — a missed or late run is
+# recovered on the next tick (live if still pre-kickoff, from history if not). Do
+# NOT assume on-time execution.
 #
 # All timing keys off the stored Polymarket gameStartTime (UTC), never the slug
 # date — see src/scheduler.py. GitHub cron is UTC, which matches.
@@ -42,16 +44,23 @@ jobs:
       # Dependencies are resolved from pyproject.toml into uv's project
       # environment by `uv run` below. Do NOT `uv pip install --system`: the
       # runner's system Python is PEP-668 externally-managed and rejects it.
-      - name: Snapshot due fixtures and persist
+      - name: Snapshot due fixtures, backfill misses, and persist
         run: |
           set +e
+          # 1) live capture for any fixture inside the pre-kickoff window
           PYTHONPATH=src uv run python src/cli.py snapshot-due
-          RC=$?
+          RC=$?            # only the actionable pre-kickoff alert drives the run's exit code
+          # 2) recover any PAST-kickoff misses from CLOB prices-history. Both
+          #    commands are insert-once/idempotent, so this makes the pipeline
+          #    self-healing: a delayed or skipped run is recovered on the next
+          #    tick. Backfill failures (e.g. no history yet) do NOT fail the run
+          #    — they retry next tick; only snapshot-due's alert fails it.
+          PYTHONPATH=src uv run python src/cli.py backfill-market || true
           set -e
           echo "snapshot-due exit code: $RC"
 
-          # Persist any captured prices back to the repo so the next run sees
-          # them (insert-once is meaningless if the DB is thrown away each run).
+          # Persist any captured/recovered prices back to the repo so the next
+          # run sees them (insert-once is meaningless if the DB is thrown away).
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if ! git diff --quiet -- data/backtest.db; then

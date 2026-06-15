@@ -35,6 +35,26 @@ assert config.db_path() != config.DB_PATH and "bf.db" in str(config.db_path())
 NOW = datetime(2026, 6, 16, 12, 0, 0, tzinfo=timezone.utc)
 
 
+def _real_backfill_count():
+    """Backfill-row count in the REAL DB, snapshotted to prove the isolated run
+    doesn't touch it. Compared before/after — robust even though the real DB
+    legitimately holds backfilled prices from actual recovery runs."""
+    if not config.DB_PATH.exists():
+        return 0
+    rc = db.connect(config.DB_PATH)
+    try:
+        if not rc.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='matches'").fetchone()[0]:
+            return 0
+        return rc.execute(
+            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-backfill'"
+        ).fetchone()[0]
+    finally:
+        rc.close()
+
+
+_REAL_BF_BEFORE = _real_backfill_count()  # before any synthetic work
+
+
 def _ko(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S+00")
 
@@ -124,15 +144,11 @@ def main() -> int:
     conn.close()
     print("Phase 2 PASS: de-vig + backfill tag + historical captured_at + insert-once + future-skip")
 
-    # real DB untouched
-    if config.DB_PATH.exists():
-        rc = db.connect(config.DB_PATH)
-        has = rc.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='matches'").fetchone()[0]
-        n_bf = rc.execute(
-            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-backfill'"
-        ).fetchone()[0] if has else 0
-        rc.close()
-        assert n_bf == 0, "real DB got backfill rows — contamination!"
+    # real DB untouched by the isolated run (before == after; robust even though
+    # the real DB legitimately holds backfilled prices from real recovery runs)
+    assert _real_backfill_count() == _REAL_BF_BEFORE, (
+        f"REAL DB backfill count changed: before={_REAL_BF_BEFORE} after={_real_backfill_count()}"
+    )
 
     print("\ntest_backfill: PASS ✓")
     print(f"  artifacts in: {_TMP}")

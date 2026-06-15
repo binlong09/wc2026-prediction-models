@@ -350,12 +350,16 @@ PYTHONPATH=src python src/cli.py snapshot-due --now 2026-06-14T03:00:00+00:00   
   recovers it from price history after the fact.
 
 The workflow is [`.github/workflows/snapshot-market.yml`](.github/workflows/snapshot-market.yml):
-cron `*/30 * * * *`, installs deps with uv, runs `snapshot-due`, then commits the
-updated `data/backtest.db` back so captures persist across the ephemeral runners
-(insert-once is meaningless if the DB is discarded each run), and finally
-propagates the exit code so an alert fails the run. It needs the committed DB to
-already have `build-elo` + `verify-market-map` done (a one-time local step you
-commit). Read-only price collection only — no auth, no trading.
+cron `*/30 * * * *`, installs deps with uv, runs `snapshot-due` (live capture)
+**then `backfill-market`** (recover any past-kickoff misses from price history),
+commits the updated `data/backtest.db` back so prices persist across the ephemeral
+runners (insert-once is meaningless if the DB is discarded each run), and finally
+propagates `snapshot-due`'s exit code so a pre-kickoff alert fails the run.
+Running both each tick makes the pipeline **fully self-healing** — a missed or
+skipped run is recovered next tick (live if still pre-kickoff, from history if
+not); backfill failures don't fail the run (they retry next tick). It needs the
+committed DB to already have `build-elo` + `verify-market-map` done (a one-time
+local step you commit). Read-only price collection only — no auth, no trading.
 
 ### Recovering a missed price (`backfill-market`)
 
