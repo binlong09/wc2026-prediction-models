@@ -59,7 +59,17 @@ def _market_map(conn: sqlite3.Connection) -> dict[str, tuple]:
 # --------------------------------------------------------------------------- #
 def log_predictions(conn: sqlite3.Connection | None = None) -> int:
     """Capture pre-match predictions for every not-yet-played, not-yet-logged
-    match, for each version, at the model's CURRENT state.
+    match WITH A CAPTURED MARKET PRICE, for each version, at the model's CURRENT
+    state.
+
+    MARKET-PRESENT GATE (mandatory): a match is logged only once its market price
+    exists (matches.market_pW1 IS NOT NULL). Because the log is insert-once and
+    immutable, a row written with a null market would lock that null forever and
+    silently drop the match from the scorelog. Gating on market presence means
+    each match is logged exactly once — after its price lands (~90 min pre-kickoff
+    via the snapshot job) and before kickoff — freezing model + market together.
+    The v2 state progression below keys off `actual_result`, not the market, so it
+    is unaffected by this gate.
 
     State handling mirrors the backtest exactly: v2 only advances its Elo state
     after a round is FULLY played, so upcoming matches are predicted with state
@@ -93,6 +103,9 @@ def log_predictions(conn: sqlite3.Connection | None = None) -> int:
                 if m.actual_result is not None:
                     continue  # already decided — cannot log an honest pre-match pred
                 mkt = market.get(m.match_id, (None, None, None))
+                if mkt[0] is None:
+                    continue  # MARKET-PRESENT GATE: wait for the price before logging,
+                              # else the insert-once null market locks it out forever
                 for mdl in models:
                     p = mdl.predict(m)
                     cur = conn.execute(

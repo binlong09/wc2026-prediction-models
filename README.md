@@ -167,18 +167,24 @@ worldcup-backtest/
     smoke_test.py       # ISOLATED end-to-end backtest on a simulated tournament (v1+v2)
     test_versions.py    # ISOLATED v1≡v2 round-1 invariant + v2-diverges-at-round-2
     test_scorelog.py    # ISOLATED scorekeeper: log -> score -> immutability boundaries
+    test_log_gate.py    # ISOLATED market-present gate: no market -> not logged; logged once it lands
     test_fetch_market.py# ISOLATED (stubbed API) market_map + de-vig + insert-once
     test_scheduler.py   # ISOLATED window + past-kickoff guard + TZ-artifact + alert exit
+    test_backfill.py    # ISOLATED (stubbed API) prices-history recovery, pre-kickoff only
+    test_export.py      # ISOLATED companion.json schema (predictions + scored + scorelog)
 ```
 
-All three tests are self-isolating (throwaway DB via `WCBT_DB`, redirected
-report dir) and never touch `data/backtest.db`. Run them with plain `python`:
+All tests are self-isolating (throwaway DB via `WCBT_DB`, redirected report dir)
+and never touch `data/backtest.db`. Run them with plain `python`:
 
 ```bash
 PYTHONPATH=src python tests/test_versions.py      # the round-1 v1≡v2 guardrail
 PYTHONPATH=src python tests/test_scorelog.py      # scorekeeper boundaries
+PYTHONPATH=src python tests/test_log_gate.py      # market-present gate on log-predictions
 PYTHONPATH=src python tests/test_fetch_market.py  # market_map + de-vig + insert-once (stubbed API)
 PYTHONPATH=src python tests/test_scheduler.py     # window + past-kickoff guard + TZ-artifact + alert
+PYTHONPATH=src python tests/test_backfill.py      # prices-history recovery (stubbed API)
+PYTHONPATH=src python tests/test_export.py        # companion.json schema
 PYTHONPATH=src python tests/smoke_test.py         # full simulated tournament
 ```
 

@@ -46,7 +46,7 @@ jobs:
       # Dependencies are resolved from pyproject.toml into uv's project
       # environment by `uv run` below. Do NOT `uv pip install --system`: the
       # runner's system Python is PEP-668 externally-managed and rejects it.
-      - name: Snapshot due fixtures, backfill misses, and persist
+      - name: Snapshot due fixtures, backfill misses, log predictions, and persist
         run: |
           set +e
           # 1) live capture for any fixture inside the pre-kickoff window
@@ -58,6 +58,12 @@ jobs:
           #    tick. Backfill failures (e.g. no history yet) do NOT fail the run
           #    — they retry next tick; only snapshot-due's alert fails it.
           PYTHONPATH=src uv run python src/cli.py backfill-market || true
+          # 3) freeze the pre-match model + market snapshot into match_log AFTER
+          #    capture, so the market-present gate has prices to find. Insert-once:
+          #    each match is logged exactly once, after its price lands and before
+          #    kickoff. This populates the companion's per-match model numbers and
+          #    the scorelog. Does not affect the run's exit code.
+          PYTHONPATH=src uv run python src/cli.py log-predictions || true
           set -e
           echo "snapshot-due exit code: $RC"
 
