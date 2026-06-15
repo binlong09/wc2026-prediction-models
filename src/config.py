@@ -63,7 +63,14 @@ BOOTSTRAP_SEED = 20260611
 # date — many fixtures kick off the UTC day after their local/slug date.
 SNAPSHOT_WINDOW_MIN = 90     # snapshot a fixture once kickoff is within this many minutes
 SNAPSHOT_ALERT_MIN = 30      # uncaptured this close to (or past) kickoff -> exit non-zero
-SNAPSHOT_MISS_GRACE_MIN = 180  # keep alerting on a missed (past-kickoff) capture this long, then stop
+SNAPSHOT_MISS_GRACE_MIN = 180  # keep noting a missed (past-kickoff) capture this long, then stop
+
+# ---- Backfill (recover a missed pre-match price from CLOB prices-history) ---
+# Polymarket keeps a per-token price time-series (even for resolved markets), so
+# a missed snapshot is recoverable. Backfill reads the price this many minutes
+# before kickoff, using only pre-kickoff points (never an in-play price).
+BACKFILL_TARGET_MIN = 60     # target read ~60 min pre-kickoff (a settled pre-match read)
+BACKFILL_FIDELITY_MIN = 10   # prices-history bucket size (minutes)
 
 
 def db_path() -> Path:

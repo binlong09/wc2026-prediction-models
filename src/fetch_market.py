@@ -216,3 +216,102 @@ def fetch_market(matchday: int, conn: sqlite3.Connection | None = None) -> dict:
     finally:
         if own:
             conn.close()
+
+
+# --------------------------------------------------------------------------- #
+# backfill-market — recover a MISSED pre-match price from CLOB prices-history    #
+# --------------------------------------------------------------------------- #
+def backfill_market(
+    conn: sqlite3.Connection | None = None,
+    now: datetime | None = None,
+    target_min: int | None = None,
+    fidelity: int | None = None,
+) -> dict:
+    """Recover pre-match prices for fixtures whose kickoff has passed and that
+    were never captured. Polymarket retains a per-token price history (even for
+    resolved markets), so we read each token's price ~target_min before kickoff
+    — using ONLY pre-kickoff points so an in-play price is never used — de-vig,
+    and store tagged 'polymarket-backfill'.
+
+    insert-once: only writes where no snapshot exists, so it never overwrites a
+    live 'polymarket-auto' capture or a manual 'load-market' override. Future
+    fixtures are left to the live scheduler.
+    """
+    own = conn is None
+    conn = conn or db.connect()
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    target_min = target_min if target_min is not None else config.BACKFILL_TARGET_MIN
+    fidelity = fidelity if fidelity is not None else config.BACKFILL_FIDELITY_MIN
+    try:
+        db.init_db()
+        rows = conn.execute(
+            "SELECT m.match_id, m.grp, m.team1_id, m.team2_id, m.market_pW1, "
+            "mm.token_w1, mm.token_draw, mm.token_w2, mm.kickoff, mm.event_slug "
+            "FROM matches m JOIN market_map mm ON mm.match_id = m.match_id "
+            "ORDER BY mm.kickoff"
+        ).fetchall()
+        if not rows:
+            print("backfill-market: no mapped fixtures. Run verify-market-map first.")
+            return {"recovered": 0, "skipped": 0, "failed": 0, "future": 0}
+
+        recovered = skipped = failed = future = 0
+        cli = pm.client()
+        try:
+            for r in rows:
+                label = f"{r['grp']} {r['team1_id']} vs {r['team2_id']}"
+                if r["market_pW1"] is not None:
+                    skipped += 1  # already have a snapshot (any source) — never overwrite
+                    continue
+                ko = pm.parse_game_time(r["kickoff"])
+                if ko is None:
+                    print(f"  skip   {label}: no kickoff in market_map")
+                    skipped += 1
+                    continue
+                if ko >= now:
+                    future += 1  # not a miss yet — leave to the live scheduler
+                    continue
+
+                ko_ts = int(ko.timestamp())
+                target = ko_ts - target_min * 60
+                p1 = pm.price_at(r["token_w1"], target, not_after_ts=ko_ts, fidelity=fidelity, cli=cli)
+                pd_ = pm.price_at(r["token_draw"], target, not_after_ts=ko_ts, fidelity=fidelity, cli=cli)
+                p2 = pm.price_at(r["token_w2"], target, not_after_ts=ko_ts, fidelity=fidelity, cli=cli)
+                if None in (p1, pd_, p2):
+                    print(f"  FAIL   {label}: no pre-kickoff history for one or more tokens")
+                    failed += 1
+                    continue
+
+                (m1, t1), (md, td), (m2, t2) = p1, pd_, p2
+                n1, nd, n2 = _normalize(m1, md, m2)
+                # captured_at = the actual (latest) pre-match observation time
+                used_ts = max(t1, td, t2)
+                captured_at = datetime.fromtimestamp(used_ts, timezone.utc).isoformat(timespec="seconds")
+                cur = conn.execute(
+                    "UPDATE matches SET market_pW1=?, market_pD=?, market_pW2=?, "
+                    "market_source='polymarket-backfill', market_captured_at=? "
+                    "WHERE match_id=? AND market_pW1 IS NULL",
+                    (n1, nd, n2, captured_at, r["match_id"]),
+                )
+                if cur.rowcount:
+                    recovered += 1
+                    read = datetime.fromtimestamp(used_ts, timezone.utc).strftime("%Y-%m-%dT%H:%MZ")
+                    print(
+                        f"  REC    {label}  [{r['event_slug']}]\n"
+                        f"          read @ {read} (~T-{target_min}m)  raw "
+                        f"w1={m1:.3f} draw={md:.3f} w2={m2:.3f} (sum {m1+md+m2:.3f})\n"
+                        f"          de-vigged  pW1={n1:.3f} pD={nd:.3f} pW2={n2:.3f}"
+                    )
+                else:
+                    skipped += 1
+            conn.commit()
+        finally:
+            cli.close()
+
+        print(f"backfill-market: recovered={recovered} skipped={skipped} "
+              f"failed={failed} future={future}")
+        return {"recovered": recovered, "skipped": skipped, "failed": failed, "future": future}
+    finally:
+        if own:
+            conn.close()

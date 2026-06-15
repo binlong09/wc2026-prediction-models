@@ -143,10 +143,10 @@ worldcup-backtest/
     backtest.py         # the per-round train/test loop (the core)
     report.py           # static grid (terminal + HTML) + reliability PNGs
     scorelog.py         # model-vs-market scorekeeper: log + score + report (Task 2)
-    polymarket.py       # read-only Gamma+CLOB client + fixture->token resolver (addendum)
-    fetch_market.py     # verify-market-map + fetch-market (auto market snapshot, addendum §1-2)
+    polymarket.py       # read-only Gamma+CLOB client (incl. prices-history) + resolver
+    fetch_market.py     # verify-market-map + fetch-market + backfill-market (addendum §1-2)
     scheduler.py        # snapshot-due: kickoff-window polling + guards + alert (addendum §3-5)
-    cli.py              # ...+ verify-market-map/fetch-market/snapshot-due/
+    cli.py              # ...+ verify-market-map/fetch-market/backfill-market/snapshot-due/
                         #   log-predictions/score-log/scorelog
   .github/workflows/
     snapshot-market.yml # cron poll -> snapshot-due, commits captures back (Stage 2)
@@ -264,11 +264,13 @@ a table + a `report/scorelog.png` of cumulative skill as results land).
 ## Automated market snapshot (`fetch-market`)
 
 The addendum replaces manual `load-market` entry with an automated **read-only**
-pre-match snapshot from Polymarket. Polymarket exposes only *live* market state —
-once a match resolves, the pre-match price is unrecoverable — so the snapshot is
-the one irreversible step in the pipeline and must happen before kickoff.
+pre-match snapshot from Polymarket. Capturing live, before kickoff, is still
+preferred — but, correcting the addendum's premise, a *missed* snapshot is **not**
+permanently lost: Polymarket's CLOB exposes a per-token price **history**
+(`/prices-history`) that survives market resolution, so a missed pre-match price
+can be recovered after the fact with [`backfill-market`](#recovering-a-missed-price-backfill-market).
 
-**Status: Stage 1 (manual command) + Stage 2 (scheduler) complete.**
+**Status: Stage 1 (manual command) + Stage 2 (scheduler) + backfill complete.**
 
 It writes the **same `market_pW1/pD/pW2` fields** `load-market` populates (vig-
 stripped, summing to 1), tagged `market_source='polymarket-auto'` with a
@@ -343,10 +345,9 @@ PYTHONPATH=src python src/cli.py snapshot-due --now 2026-06-14T03:00:00+00:00   
   **exits non-zero** — the workflow fails and GitHub's failed-run email *is* the
   alert, giving you time to hand-enter via `load-market` before kick. Only this
   *actionable* pre-kickoff case fails the run. A fixture whose kickoff has already
-  passed uncaptured (within `SNAPSHOT_MISS_GRACE_MIN`) is a permanent miss — it's
-  logged as a loud `NOTE`, but does **not** fail the run, since a pre-match price
-  can't be recovered after kickoff and failing on it would only be non-actionable
-  alert noise.
+  passed uncaptured is noted in one line but does **not** fail the run — it isn't
+  lost, since [`backfill-market`](#recovering-a-missed-price-backfill-market)
+  recovers it from price history after the fact.
 
 The workflow is [`.github/workflows/snapshot-market.yml`](.github/workflows/snapshot-market.yml):
 cron `*/30 * * * *`, installs deps with uv, runs `snapshot-due`, then commits the
@@ -355,6 +356,31 @@ updated `data/backtest.db` back so captures persist across the ephemeral runners
 propagates the exit code so an alert fails the run. It needs the committed DB to
 already have `build-elo` + `verify-market-map` done (a one-time local step you
 commit). Read-only price collection only — no auth, no trading.
+
+### Recovering a missed price (`backfill-market`)
+
+Contrary to the addendum's assumption, a missed pre-match snapshot is **not**
+permanently lost. Polymarket's CLOB keeps a per-token price time-series
+(`/prices-history`) that survives market resolution, so the price can be read
+after the fact:
+
+```bash
+PYTHONPATH=src python src/cli.py backfill-market           # recover all missed past-kickoff fixtures
+PYTHONPATH=src python src/cli.py backfill-market --target-min 75
+```
+
+For every mapped fixture that has **no snapshot yet** and whose kickoff is in the
+**past**, it reads each token's price ~`BACKFILL_TARGET_MIN` (default 60) minutes
+before `gameStartTime` — using **only pre-kickoff points**, so an in-play price is
+never used — de-vigs, and stores it tagged `market_source='polymarket-backfill'`
+with `market_captured_at` set to the actual historical read time. It's
+**insert-once** (never overwrites a live `polymarket-auto` capture or a manual
+`load-market` override) and leaves future fixtures to the live scheduler.
+
+One honest caveat on basis: the live scheduler reads `/midpoint` (bid/ask mid),
+while backfill reads the `/prices-history` series (the traded-price curve) — a
+slightly different basis. The distinct `polymarket-backfill` source tag keeps
+that visible in the data.
 
 > The scorelog logs the model's **uncalibrated** pre-match prior prediction, by
 > design: temperature calibration needs that round's already-played A–F results,

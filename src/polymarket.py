@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import datetime, timezone
 
 import httpx
 
@@ -68,6 +69,26 @@ def client() -> httpx.Client:
         timeout=30.0,
         headers={"User-Agent": "wc2026-backtest/research (read-only price collection)"},
     )
+
+
+_OFFSET_NO_MIN = re.compile(r"([+-]\d{2})$")  # '+00' -> needs ':00' for fromisoformat
+
+
+def parse_game_time(raw: str | None) -> datetime | None:
+    """Parse Polymarket's gameStartTime ('2026-06-15 19:00:00+00') to an aware
+    UTC datetime. Returns None if absent/unparseable. The canonical kickoff
+    parser — scheduler and backfill both key off this, never the slug date."""
+    if not raw:
+        return None
+    s = raw.strip().replace(" ", "T")
+    s = _OFFSET_NO_MIN.sub(r"\1:00", s)  # '+00' -> '+00:00'
+    try:
+        dt = datetime.fromisoformat(s)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
 
 
 # --------------------------------------------------------------------------- #
@@ -209,3 +230,48 @@ def midpoint(token_id: str, cli: httpx.Client | None = None) -> float | None:
     finally:
         if own:
             cli.close()
+
+
+def prices_history(
+    token_id: str, start_ts: int, end_ts: int, fidelity: int = 10,
+    cli: httpx.Client | None = None,
+) -> list[dict]:
+    """Read-only price time-series for a token over [start_ts, end_ts] (unix
+    seconds), bucketed at `fidelity` minutes. Works for resolved markets too —
+    Polymarket retains the history, which is what makes a missed snapshot
+    recoverable. Returns [] on any error. Each point is {"t": unix, "p": price}."""
+    own = cli is None
+    cli = cli or client()
+    try:
+        r = cli.get(
+            f"{CLOB}/prices-history",
+            params={"market": token_id, "startTs": int(start_ts),
+                    "endTs": int(end_ts), "fidelity": fidelity},
+        )
+        if r.status_code != 200:
+            return []
+        return r.json().get("history", []) or []
+    except (httpx.HTTPError, ValueError, KeyError, TypeError):
+        return []
+    finally:
+        if own:
+            cli.close()
+
+
+def price_at(
+    token_id: str, target_ts: int, not_after_ts: int | None = None,
+    search_window_s: int = 10800, fidelity: int = 10, cli: httpx.Client | None = None,
+) -> tuple[float, int] | None:
+    """The token's price nearest to `target_ts`, restricted to points at or
+    before `not_after_ts` (use the kickoff time so an in-play price is never
+    returned). Returns (price, used_ts) or None if no qualifying point exists."""
+    hist = prices_history(
+        token_id, target_ts - search_window_s,
+        (not_after_ts if not_after_ts is not None else target_ts) + 600,
+        fidelity=fidelity, cli=cli,
+    )
+    pts = [p for p in hist if not_after_ts is None or p.get("t", 0) <= not_after_ts]
+    if not pts:
+        return None
+    nearest = min(pts, key=lambda p: abs(p["t"] - target_ts))
+    return float(nearest["p"]), int(nearest["t"])

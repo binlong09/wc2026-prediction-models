@@ -21,14 +21,14 @@ GUARDS:
     load-market override path is never touched.
 
 ALERT (no Resend — the failed-workflow email is the alert):
-  If a fixture is still uncaptured and unplayed within SNAPSHOT_ALERT_MIN of
-  kickoff (or up to SNAPSHOT_MISS_GRACE_MIN past it), the run logs loudly and
-  returns a non-zero exit code so GitHub Actions emails you in time to hand-enter
-  via load-market.
+  Only the ACTIONABLE case fails the run: a fixture still uncaptured within
+  SNAPSHOT_ALERT_MIN *before* kickoff returns a non-zero exit so GitHub emails
+  you in time to hand-enter via load-market. A fixture whose kickoff has already
+  passed uncaptured is noted (one line) but does NOT fail the run — it isn't lost:
+  `backfill-market` recovers it from CLOB prices-history after the fact.
 """
 from __future__ import annotations
 
-import re
 import sqlite3
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -38,23 +38,10 @@ import db
 import fetch_market as fm
 import polymarket as pm
 
-_OFFSET_NO_MIN = re.compile(r"([+-]\d{2})$")  # '+00' -> needs ':00'
-
-
-def parse_kickoff(raw: str | None) -> datetime | None:
-    """Parse Polymarket's gameStartTime ('2026-06-15 19:00:00+00') to an
-    aware UTC datetime. Returns None if absent/unparseable."""
-    if not raw:
-        return None
-    s = raw.strip().replace(" ", "T")
-    s = _OFFSET_NO_MIN.sub(r"\1:00", s)  # '+00' -> '+00:00'
-    try:
-        dt = datetime.fromisoformat(s)
-    except ValueError:
-        return None
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+# The kickoff parser lives in polymarket (the source of the gameStartTime
+# format) so the scheduler and backfill share one implementation. Re-exported
+# here under the original name for callers/tests that reference it.
+parse_kickoff = pm.parse_game_time
 
 
 @dataclass
@@ -188,15 +175,12 @@ def snapshot_due(
         print(f"snapshot-due: captured={captured} already={already} not-yet={not_yet} "
               f"played={played} failed={failed} no-kickoff={no_kickoff}")
 
-        # Recent non-actionable misses: log loudly for visibility, but do NOT
-        # fail the run (kickoff has passed — nothing to hand-enter in time).
+        # Past-kickoff misses: a one-line, non-failing note. These are NOT lost —
+        # `backfill-market` recovers them from CLOB prices-history — so we don't
+        # belabor them per-match or fail the run. (Details available at -v.)
         if misses:
-            print("\n" + "-" * 70)
-            print(f"NOTE: {len(misses)} uncaptured fixture(s) past kickoff or unschedulable "
-                  "(not actionable — logged, run not failed):")
-            for m in misses:
-                print(f"  ~~ {m}")
-            print("-" * 70)
+            print(f"note: {len(misses)} uncaptured fixture(s) past kickoff/unschedulable — "
+                  "recoverable with `backfill-market` (run not failed).")
 
         # Actionable pre-kickoff alerts: fail the run so the email fires in time.
         if alerts:

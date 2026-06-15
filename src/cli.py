@@ -36,6 +36,11 @@ def main(argv: list[str] | None = None) -> int:
                          help="auto-snapshot vig-stripped Polymarket prices for a matchday (insert-once)")
     fmp.add_argument("--matchday", "-m", type=int, required=True, choices=(1, 2, 3))
 
+    bf = sub.add_parser("backfill-market",
+                        help="recover MISSED pre-match prices from CLOB prices-history (insert-once)")
+    bf.add_argument("--target-min", type=int, default=None,
+                    help="minutes before kickoff to read (default from config)")
+
     sd = sub.add_parser("snapshot-due",
                         help="scheduler pass: snapshot fixtures kicking off within the window (cron job)")
     sd.add_argument("--window-min", type=int, default=None, help="override snapshot window (minutes)")
@@ -65,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
         fm.verify_market_map()
     elif args.cmd == "fetch-market":
         fm.fetch_market(args.matchday)
+    elif args.cmd == "backfill-market":
+        fm.backfill_market(target_min=args.target_min)
     elif args.cmd == "snapshot-due":
         now = scheduler.parse_kickoff(args.now) if args.now else None
         if args.now and now is None:
