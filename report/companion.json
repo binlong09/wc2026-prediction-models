@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-15T19:52:17Z",
+  "generated_at": "2026-06-15T20:09:10Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1493,6 +1493,35 @@
           "v2": 0.048
         }
       }
-    ]
+    ],
+    "pooled": {
+      "n": 9,
+      "v1": {
+        "n": 9,
+        "skill_brier": 0.025,
+        "skill_brier_ci": [
+          -0.121,
+          0.1397
+        ],
+        "skill_logloss": 0.048,
+        "skill_logloss_ci": [
+          -0.107,
+          0.1592
+        ]
+      },
+      "v2": {
+        "n": 9,
+        "skill_brier": 0.025,
+        "skill_brier_ci": [
+          -0.121,
+          0.1397
+        ],
+        "skill_logloss": 0.048,
+        "skill_logloss_ci": [
+          -0.107,
+          0.1592
+        ]
+      }
+    }
   }
 }

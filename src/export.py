@@ -22,7 +22,7 @@ from datetime import datetime, timezone
 import config
 import db
 import polymarket as pm
-from score import skill_score
+from score import bootstrap_skill_ci, skill_score
 
 # our market_source -> the spec's compact enum
 _SRC = {
@@ -164,12 +164,16 @@ def _scorelog(conn: sqlite3.Connection, pub: dict) -> dict:
             r["brier_model"], r["logloss_model"], r["brier_market"], r["logloss_market"])
 
     cum = {v: {"mb": 0.0, "ml": 0.0, "kb": 0.0, "kl": 0.0, "n": 0} for v in ("v1", "v2")}
+    # per-version per-match score arrays, for the pooled bootstrap CI
+    arr = {v: {"mb": [], "ml": [], "kb": [], "kl": []} for v in ("v1", "v2")}
     points = []
     for mid in order:
         for ver, vals in by_match[mid].items():
             bm, lm, bk, lk = vals
             c = cum[ver]
             c["mb"] += bm; c["ml"] += lm; c["kb"] += bk; c["kl"] += lk; c["n"] += 1
+            a = arr[ver]
+            a["mb"].append(bm); a["ml"].append(lm); a["kb"].append(bk); a["kl"].append(lk)
         n = max(cum["v1"]["n"], cum["v2"]["n"])
         pt = {"match_id": pub.get(mid, mid), "n": n,
               "cum_skill_brier": {}, "cum_skill_logloss": {}}
@@ -179,4 +183,21 @@ def _scorelog(conn: sqlite3.Connection, pub: dict) -> dict:
                 pt["cum_skill_brier"][ver] = round(skill_score(c["mb"] / c["n"], c["kb"] / c["n"]), 4)
                 pt["cum_skill_logloss"][ver] = round(skill_score(c["ml"] / c["n"], c["kl"] / c["n"]), 4)
         points.append(pt)
-    return {"points": points}
+
+    # Pooled skill + bootstrap 90% CI over all scored matches (reuse score.py's
+    # seeded bootstrap — deterministic, so companion.json stays diff-stable).
+    pooled: dict = {"n": len(order)}
+    for ver in ("v1", "v2"):
+        a = arr[ver]
+        if a["mb"] and sum(a["kb"]) > 0:
+            cb = bootstrap_skill_ci(a["mb"], a["kb"])   # (lo, hi) on Brier skill
+            cl = bootstrap_skill_ci(a["ml"], a["kl"])   # (lo, hi) on log-loss skill
+            n = len(a["mb"])
+            pooled[ver] = {
+                "n": n,
+                "skill_brier": round(skill_score(sum(a["mb"]) / n, sum(a["kb"]) / n), 4),
+                "skill_brier_ci": [round(cb[0], 4), round(cb[1], 4)],
+                "skill_logloss": round(skill_score(sum(a["ml"]) / n, sum(a["kl"]) / n), 4),
+                "skill_logloss_ci": [round(cl[0], 4), round(cl[1], 4)],
+            }
+    return {"points": points, "pooled": pooled}
