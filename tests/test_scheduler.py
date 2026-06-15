@@ -35,6 +35,26 @@ import scheduler  # noqa: E402
 
 assert config.db_path() != config.DB_PATH and "sched.db" in str(config.db_path())
 
+
+def _real_auto_count():
+    """polymarket-auto rows in the REAL DB — snapshotted to prove the isolated
+    run never writes there. Compared before/after (robust even though the real
+    DB legitimately holds live auto captures from the running scheduler)."""
+    if not config.DB_PATH.exists():
+        return 0
+    rc = db.connect(config.DB_PATH)
+    try:
+        if not rc.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='matches'").fetchone()[0]:
+            return 0
+        return rc.execute(
+            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-auto'"
+        ).fetchone()[0]
+    finally:
+        rc.close()
+
+
+_REAL_AUTO_BEFORE = _real_auto_count()
+
 NOW = datetime(2026, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
 
 
@@ -148,15 +168,10 @@ def main() -> int:
     print("Phase 4 PASS: past-kickoff miss is logged but does NOT fail the run")
     conn.close()
 
-    # real DB untouched
-    if config.DB_PATH.exists():
-        rc2 = db.connect(config.DB_PATH)
-        has = rc2.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='matches'").fetchone()[0]
-        n_auto = rc2.execute(
-            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-auto'"
-        ).fetchone()[0] if has else 0
-        rc2.close()
-        assert n_auto == 0, "real DB got auto snapshots — contamination!"
+    # real DB untouched by the isolated run (before == after)
+    assert _real_auto_count() == _REAL_AUTO_BEFORE, (
+        f"REAL DB auto-count changed: before={_REAL_AUTO_BEFORE} after={_real_auto_count()}"
+    )
 
     print("\ntest_scheduler: PASS ✓")
     print(f"  artifacts in: {_TMP}")

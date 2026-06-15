@@ -28,6 +28,26 @@ import polymarket as pm  # noqa: E402
 
 assert config.db_path() != config.DB_PATH and "fm.db" in str(config.db_path())
 
+
+def _real_auto_count():
+    """polymarket-auto rows in the REAL DB — snapshotted to prove the isolated
+    run never writes there. Compared before/after (robust even though the real
+    DB legitimately holds live auto captures from the running scheduler)."""
+    if not config.DB_PATH.exists():
+        return 0
+    rc = db.connect(config.DB_PATH)
+    try:
+        if not rc.execute("SELECT COUNT(*) FROM sqlite_master WHERE name='matches'").fetchone()[0]:
+            return 0
+        return rc.execute(
+            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-auto'"
+        ).fetchone()[0]
+    finally:
+        rc.close()
+
+
+_REAL_AUTO_BEFORE = _real_auto_count()
+
 # Two fixtures with hand-set midpoints (raw, sum > 1 to exercise de-vig).
 # token ids are arbitrary strings; the stub maps them to fixed midpoints.
 _MIDS = {
@@ -125,17 +145,9 @@ def main() -> int:
 
     # real DB untouched
     if config.DB_PATH.exists():
-        rc = db.connect(config.DB_PATH)
-        has_mm = rc.execute(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='market_map'"
-        ).fetchone()[0]
-        real_auto = rc.execute(
-            "SELECT COUNT(*) FROM matches WHERE market_source='polymarket-auto'"
-        ).fetchone()[0] if rc.execute(
-            "SELECT COUNT(*) FROM sqlite_master WHERE name='matches'"
-        ).fetchone()[0] else 0
-        rc.close()
-        assert real_auto == 0, "real DB got auto snapshots — contamination!"
+        assert _real_auto_count() == _REAL_AUTO_BEFORE, (
+            f"REAL DB auto-count changed: before={_REAL_AUTO_BEFORE} after={_real_auto_count()}"
+        )
 
     print("\ntest_fetch_market: PASS ✓")
     print(f"  mapped=2, de-vig ok (sum=1), insert-once ok, manual override ok")
