@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-16T12:19:37Z",
+  "generated_at": "2026-06-16T21:44:43Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -621,12 +621,41 @@
       "team1": "France",
       "team2": "Senegal",
       "kickoff_utc": "2026-06-16T19:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.6611,
+          0.2034,
+          0.1356
+        ],
+        "v2": [
+          0.6611,
+          0.2034,
+          0.1356
+        ],
+        "market": [
+          0.6617,
+          0.2139,
+          0.1244
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-16T18:17:23Z",
+      "scored": {
+        "v1": {
+          "brier": 0.1746,
+          "logloss": 0.4139
+        },
+        "v2": {
+          "brier": 0.1746,
+          "logloss": 0.4139
+        },
+        "market": {
+          "brier": 0.1757,
+          "logloss": 0.413
+        }
+      }
     },
     {
       "match_id": "fifwc-irq-nor-2026-06-16",
@@ -638,9 +667,25 @@
       "kickoff_utc": "2026-06-16T22:00:00Z",
       "status": "upcoming",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.1707,
+          0.2295,
+          0.5998
+        ],
+        "v2": [
+          0.1707,
+          0.2295,
+          0.5998
+        ],
+        "market": [
+          0.0653,
+          0.1357,
+          0.799
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-16T21:27:12Z",
       "scored": null
     },
     {
@@ -1599,34 +1644,46 @@
           "v1": 0.0143,
           "v2": 0.0143
         }
+      },
+      {
+        "match_id": "fifwc-fra-sen-2026-06-16",
+        "n": 13,
+        "cum_skill_brier": {
+          "v1": -0.0044,
+          "v2": -0.0044
+        },
+        "cum_skill_logloss": {
+          "v1": 0.0139,
+          "v2": 0.0139
+        }
       }
     ],
     "pooled": {
-      "n": 12,
+      "n": 13,
       "v1": {
-        "n": 12,
-        "skill_brier": -0.0045,
+        "n": 13,
+        "skill_brier": -0.0044,
         "skill_brier_ci": [
-          -0.112,
-          0.0859
+          -0.1102,
+          0.0857
         ],
-        "skill_logloss": 0.0143,
+        "skill_logloss": 0.0139,
         "skill_logloss_ci": [
-          -0.1007,
-          0.107
+          -0.1,
+          0.1053
         ]
       },
       "v2": {
-        "n": 12,
-        "skill_brier": -0.0045,
+        "n": 13,
+        "skill_brier": -0.0044,
         "skill_brier_ci": [
-          -0.112,
-          0.0859
+          -0.1102,
+          0.0857
         ],
-        "skill_logloss": 0.0143,
+        "skill_logloss": 0.0139,
         "skill_logloss_ci": [
-          -0.1007,
-          0.107
+          -0.1,
+          0.1053
         ]
       }
     }
