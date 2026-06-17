@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T11:56:33Z",
+  "generated_at": "2026-06-17T21:19:30Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -774,12 +774,41 @@
       "team1": "Portugal",
       "team2": "DR Congo",
       "kickoff_utc": "2026-06-17T17:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "draw",
+      "predictions": {
+        "v1": [
+          0.7537,
+          0.1655,
+          0.0808
+        ],
+        "v2": [
+          0.7537,
+          0.1655,
+          0.0808
+        ],
+        "market": [
+          0.7612,
+          0.1642,
+          0.0746
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-17T16:13:39Z",
+      "scored": {
+        "v1": {
+          "brier": 1.271,
+          "logloss": 1.7986
+        },
+        "v2": {
+          "brier": 1.271,
+          "logloss": 1.7986
+        },
+        "market": {
+          "brier": 1.2836,
+          "logloss": 1.8068
+        }
+      }
     },
     {
       "match_id": "fifwc-eng-hrv-2026-06-17",
@@ -789,11 +818,27 @@
       "team1": "England",
       "team2": "Croatia",
       "kickoff_utc": "2026-06-17T20:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.5453,
+          0.237,
+          0.2177
+        ],
+        "v2": [
+          0.5453,
+          0.237,
+          0.2177
+        ],
+        "market": [
+          0.5721,
+          0.2537,
+          0.1741
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-17T18:42:59Z",
       "scored": null
     },
     {
@@ -1728,34 +1773,46 @@
           "v1": 0.0054,
           "v2": 0.0054
         }
+      },
+      {
+        "match_id": "fifwc-prt-cdr-2026-06-17",
+        "n": 16,
+        "cum_skill_brier": {
+          "v1": -0.0098,
+          "v2": -0.0098
+        },
+        "cum_skill_logloss": {
+          "v1": 0.0053,
+          "v2": 0.0053
+        }
       }
     ],
     "pooled": {
-      "n": 15,
+      "n": 16,
       "v1": {
-        "n": 15,
-        "skill_brier": -0.0121,
+        "n": 16,
+        "skill_brier": -0.0098,
         "skill_brier_ci": [
-          -0.1276,
-          0.0792
+          -0.1075,
+          0.0733
         ],
-        "skill_logloss": 0.0054,
+        "skill_logloss": 0.0053,
         "skill_logloss_ci": [
-          -0.1166,
-          0.0964
+          -0.0986,
+          0.0917
         ]
       },
       "v2": {
-        "n": 15,
-        "skill_brier": -0.0121,
+        "n": 16,
+        "skill_brier": -0.0098,
         "skill_brier_ci": [
-          -0.1276,
-          0.0792
+          -0.1075,
+          0.0733
         ],
-        "skill_logloss": 0.0054,
+        "skill_logloss": 0.0053,
         "skill_logloss_ci": [
-          -0.1166,
-          0.0964
+          -0.0986,
+          0.0917
         ]
       }
     }
