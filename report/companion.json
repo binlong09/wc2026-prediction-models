@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-16T21:44:43Z",
+  "generated_at": "2026-06-17T11:56:33Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -665,8 +665,8 @@
       "team1": "Iraq",
       "team2": "Norway",
       "kickoff_utc": "2026-06-16T22:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
+      "status": "final",
+      "actual_result": "team2_win",
       "predictions": {
         "v1": [
           0.1707,
@@ -686,7 +686,20 @@
       },
       "market_source": "auto",
       "captured_at": "2026-06-16T21:27:12Z",
-      "scored": null
+      "scored": {
+        "v1": {
+          "brier": 0.2419,
+          "logloss": 0.5111
+        },
+        "v2": {
+          "brier": 0.2419,
+          "logloss": 0.5111
+        },
+        "market": {
+          "brier": 0.0631,
+          "logloss": 0.2244
+        }
+      }
     },
     {
       "match_id": "fifwc-arg-alg-2026-06-16",
@@ -696,12 +709,41 @@
       "team1": "Argentina",
       "team2": "Algeria",
       "kickoff_utc": "2026-06-17T01:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.7518,
+          0.1664,
+          0.0818
+        ],
+        "v2": [
+          0.7518,
+          0.1664,
+          0.0818
+        ],
+        "market": [
+          0.6482,
+          0.2261,
+          0.1256
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-17T00:00:11Z",
+      "scored": {
+        "v1": {
+          "brier": 0.096,
+          "logloss": 0.2852
+        },
+        "v2": {
+          "brier": 0.096,
+          "logloss": 0.2852
+        },
+        "market": {
+          "brier": 0.1907,
+          "logloss": 0.4335
+        }
+      }
     },
     {
       "match_id": "fifwc-aut-jor-2026-06-17",
@@ -711,11 +753,17 @@
       "team1": "Austria",
       "team2": "Jordan",
       "kickoff_utc": "2026-06-17T04:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "market": [
+          0.6985,
+          0.196,
+          0.1055
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-17T03:00:09Z",
       "scored": null
     },
     {
@@ -1656,34 +1704,58 @@
           "v1": 0.0139,
           "v2": 0.0139
         }
+      },
+      {
+        "match_id": "fifwc-irq-nor-2026-06-16",
+        "n": 14,
+        "cum_skill_brier": {
+          "v1": -0.0213,
+          "v2": -0.0213
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0033,
+          "v2": -0.0033
+        }
+      },
+      {
+        "match_id": "fifwc-arg-alg-2026-06-16",
+        "n": 15,
+        "cum_skill_brier": {
+          "v1": -0.0121,
+          "v2": -0.0121
+        },
+        "cum_skill_logloss": {
+          "v1": 0.0054,
+          "v2": 0.0054
+        }
       }
     ],
     "pooled": {
-      "n": 13,
+      "n": 15,
       "v1": {
-        "n": 13,
-        "skill_brier": -0.0044,
+        "n": 15,
+        "skill_brier": -0.0121,
         "skill_brier_ci": [
-          -0.1102,
-          0.0857
+          -0.1276,
+          0.0792
         ],
-        "skill_logloss": 0.0139,
+        "skill_logloss": 0.0054,
         "skill_logloss_ci": [
-          -0.1,
-          0.1053
+          -0.1166,
+          0.0964
         ]
       },
       "v2": {
-        "n": 13,
-        "skill_brier": -0.0044,
+        "n": 15,
+        "skill_brier": -0.0121,
         "skill_brier_ci": [
-          -0.1102,
-          0.0857
+          -0.1276,
+          0.0792
         ],
-        "skill_logloss": 0.0139,
+        "skill_logloss": 0.0054,
         "skill_logloss_ci": [
-          -0.1,
-          0.1053
+          -0.1166,
+          0.0964
         ]
       }
     }
