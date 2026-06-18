@@ -1,6 +1,7 @@
 match_id,market_pW1,market_pD,market_pW2,market_source,market_captured_at
 A-md1-Mexico-vs-South_Africa,0.691542,0.20398,0.104478,polymarket-backfill,2026-06-11T18:00:07+00:00
 A-md1-South_Korea-vs-Czech_Republic,0.373134,0.313433,0.313433,polymarket-backfill,2026-06-12T01:00:05+00:00
+A-md2-Czech_Republic-vs-South_Africa,0.532338,0.263682,0.20398,polymarket-backfill,2026-06-18T15:00:09+00:00
 B-md1-Canada-vs-Bosnia_and_Herzegovina,0.532338,0.273632,0.19403,polymarket-backfill,2026-06-12T18:00:05+00:00
 B-md1-Qatar-vs-Switzerland,0.05894,0.123824,0.817236,polymarket-backfill,2026-06-13T18:00:10+00:00
 C-md1-Brazil-vs-Morocco,0.58209,0.253731,0.164179,polymarket-backfill,2026-06-13T21:00:08+00:00
