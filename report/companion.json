@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-17T21:19:30Z",
+  "generated_at": "2026-06-18T11:15:42Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -818,8 +818,8 @@
       "team1": "England",
       "team2": "Croatia",
       "kickoff_utc": "2026-06-17T20:00:00Z",
-      "status": "live",
-      "actual_result": null,
+      "status": "final",
+      "actual_result": "team1_win",
       "predictions": {
         "v1": [
           0.5453,
@@ -839,7 +839,20 @@
       },
       "market_source": "auto",
       "captured_at": "2026-06-17T18:42:59Z",
-      "scored": null
+      "scored": {
+        "v1": {
+          "brier": 0.3103,
+          "logloss": 0.6064
+        },
+        "v2": {
+          "brier": 0.3103,
+          "logloss": 0.6064
+        },
+        "market": {
+          "brier": 0.2778,
+          "logloss": 0.5584
+        }
+      }
     },
     {
       "match_id": "fifwc-gha-pan-2026-06-17",
@@ -849,12 +862,41 @@
       "team1": "Ghana",
       "team2": "Panama",
       "kickoff_utc": "2026-06-17T23:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.1744,
+          0.2308,
+          0.5948
+        ],
+        "v2": [
+          0.1744,
+          0.2308,
+          0.5948
+        ],
+        "market": [
+          0.393,
+          0.3134,
+          0.2935
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-17T22:59:31Z",
+      "scored": {
+        "v1": {
+          "brier": 1.0886,
+          "logloss": 1.7463
+        },
+        "v2": {
+          "brier": 1.0886,
+          "logloss": 1.7463
+        },
+        "market": {
+          "brier": 0.5528,
+          "logloss": 0.9339
+        }
+      }
     },
     {
       "match_id": "fifwc-uzb-col-2026-06-17",
@@ -864,11 +906,17 @@
       "team1": "Uzbekistan",
       "team2": "Colombia",
       "kickoff_utc": "2026-06-18T02:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "status": "final",
+      "actual_result": "team2_win",
+      "predictions": {
+        "market": [
+          0.0945,
+          0.194,
+          0.7114
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-18T01:00:07Z",
       "scored": null
     },
     {
@@ -1785,34 +1833,58 @@
           "v1": 0.0053,
           "v2": 0.0053
         }
+      },
+      {
+        "match_id": "fifwc-eng-hrv-2026-06-17",
+        "n": 17,
+        "cum_skill_brier": {
+          "v1": -0.0122,
+          "v2": -0.0122
+        },
+        "cum_skill_logloss": {
+          "v1": 0.0027,
+          "v2": 0.0027
+        }
+      },
+      {
+        "match_id": "fifwc-gha-pan-2026-06-17",
+        "n": 18,
+        "cum_skill_brier": {
+          "v1": -0.0535,
+          "v2": -0.0535
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0369,
+          "v2": -0.0369
+        }
       }
     ],
     "pooled": {
-      "n": 16,
+      "n": 18,
       "v1": {
-        "n": 16,
-        "skill_brier": -0.0098,
+        "n": 18,
+        "skill_brier": -0.0535,
         "skill_brier_ci": [
-          -0.1075,
-          0.0733
+          -0.182,
+          0.0458
         ],
-        "skill_logloss": 0.0053,
+        "skill_logloss": -0.0369,
         "skill_logloss_ci": [
-          -0.0986,
-          0.0917
+          -0.1657,
+          0.0621
         ]
       },
       "v2": {
-        "n": 16,
-        "skill_brier": -0.0098,
+        "n": 18,
+        "skill_brier": -0.0535,
         "skill_brier_ci": [
-          -0.1075,
-          0.0733
+          -0.182,
+          0.0458
         ],
-        "skill_logloss": 0.0053,
+        "skill_logloss": -0.0369,
         "skill_logloss_ci": [
-          -0.0986,
-          0.0917
+          -0.1657,
+          0.0621
         ]
       }
     }
