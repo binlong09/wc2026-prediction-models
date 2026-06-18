@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T11:15:42Z",
+  "generated_at": "2026-06-18T21:26:57Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -927,12 +927,41 @@
       "team1": "Czech Republic",
       "team2": "South Africa",
       "kickoff_utc": "2026-06-18T16:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "draw",
+      "predictions": {
+        "v1": [
+          0.5785,
+          0.2289,
+          0.1926
+        ],
+        "v2": [
+          0.5729,
+          0.2303,
+          0.1968
+        ],
+        "market": [
+          0.5323,
+          0.2637,
+          0.204
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-18T15:00:09Z",
+      "scored": {
+        "v1": {
+          "brier": 0.9664,
+          "logloss": 1.4746
+        },
+        "v2": {
+          "brier": 0.9593,
+          "logloss": 1.4682
+        },
+        "market": {
+          "brier": 0.8672,
+          "logloss": 1.333
+        }
+      }
     },
     {
       "match_id": "fifwc-che-bih-2026-06-18",
@@ -942,12 +971,41 @@
       "team1": "Switzerland",
       "team2": "Bosnia and Herzegovina",
       "kickoff_utc": "2026-06-18T19:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.7555,
+          0.1647,
+          0.0798
+        ],
+        "v2": [
+          0.7422,
+          0.1708,
+          0.087
+        ],
+        "market": [
+          0.6219,
+          0.2338,
+          0.1443
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-18T18:00:10Z",
+      "scored": {
+        "v1": {
+          "brier": 0.0933,
+          "logloss": 0.2804
+        },
+        "v2": {
+          "brier": 0.1032,
+          "logloss": 0.2981
+        },
+        "market": {
+          "brier": 0.2185,
+          "logloss": 0.475
+        }
+      }
     },
     {
       "match_id": "fifwc-can-qat-2026-06-18",
@@ -1857,34 +1915,58 @@
           "v1": -0.0369,
           "v2": -0.0369
         }
+      },
+      {
+        "match_id": "fifwc-cze-rsa-2026-06-18",
+        "n": 19,
+        "cum_skill_brier": {
+          "v1": -0.0573,
+          "v2": -0.0568
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0411,
+          "v2": -0.0408
+        }
+      },
+      {
+        "match_id": "fifwc-che-bih-2026-06-18",
+        "n": 20,
+        "cum_skill_brier": {
+          "v1": -0.0474,
+          "v2": -0.0476
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0316,
+          "v2": -0.0321
+        }
       }
     ],
     "pooled": {
-      "n": 18,
+      "n": 20,
       "v1": {
-        "n": 18,
-        "skill_brier": -0.0535,
+        "n": 20,
+        "skill_brier": -0.0474,
         "skill_brier_ci": [
-          -0.182,
-          0.0458
+          -0.1625,
+          0.0456
         ],
-        "skill_logloss": -0.0369,
+        "skill_logloss": -0.0316,
         "skill_logloss_ci": [
-          -0.1657,
-          0.0621
+          -0.1455,
+          0.0619
         ]
       },
       "v2": {
-        "n": 18,
-        "skill_brier": -0.0535,
+        "n": 20,
+        "skill_brier": -0.0476,
         "skill_brier_ci": [
-          -0.182,
-          0.0458
+          -0.1623,
+          0.0452
         ],
-        "skill_logloss": -0.0369,
+        "skill_logloss": -0.0321,
         "skill_logloss_ci": [
-          -0.1657,
-          0.0621
+          -0.1465,
+          0.0614
         ]
       }
     }
