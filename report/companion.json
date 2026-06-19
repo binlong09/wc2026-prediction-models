@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-18T21:26:57Z",
+  "generated_at": "2026-06-19T11:40:37Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1015,12 +1015,41 @@
       "team1": "Canada",
       "team2": "Qatar",
       "kickoff_utc": "2026-06-18T22:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.8181,
+          0.1392,
+          0.0428
+        ],
+        "v2": [
+          0.808,
+          0.1451,
+          0.0469
+        ],
+        "market": [
+          0.7512,
+          0.1642,
+          0.0846
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-18T21:00:13Z",
+      "scored": {
+        "v1": {
+          "brier": 0.0543,
+          "logloss": 0.2008
+        },
+        "v2": {
+          "brier": 0.0601,
+          "logloss": 0.2131
+        },
+        "market": {
+          "brier": 0.096,
+          "logloss": 0.286
+        }
+      }
     },
     {
       "match_id": "fifwc-mex-kr-2026-06-18",
@@ -1030,12 +1059,41 @@
       "team1": "Mexico",
       "team2": "South Korea",
       "kickoff_utc": "2026-06-19T01:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.6145,
+          0.234,
+          0.1516
+        ],
+        "v2": [
+          0.6092,
+          0.2357,
+          0.1551
+        ],
+        "market": [
+          0.4726,
+          0.2935,
+          0.2338
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-19T00:10:18Z",
+      "scored": {
+        "v1": {
+          "brier": 0.2264,
+          "logloss": 0.487
+        },
+        "v2": {
+          "brier": 0.2323,
+          "logloss": 0.4956
+        },
+        "market": {
+          "brier": 0.4189,
+          "logloss": 0.7494
+        }
+      }
     },
     {
       "match_id": "fifwc-usa-aus-2026-06-19",
@@ -1929,44 +1987,68 @@
         }
       },
       {
-        "match_id": "fifwc-che-bih-2026-06-18",
+        "match_id": "fifwc-mex-kr-2026-06-18",
         "n": 20,
         "cum_skill_brier": {
-          "v1": -0.0474,
-          "v2": -0.0476
+          "v1": -0.042,
+          "v2": -0.0419
         },
         "cum_skill_logloss": {
-          "v1": -0.0316,
-          "v2": -0.0321
+          "v1": -0.0282,
+          "v2": -0.0283
+        }
+      },
+      {
+        "match_id": "fifwc-can-qat-2026-06-18",
+        "n": 21,
+        "cum_skill_brier": {
+          "v1": -0.0388,
+          "v2": -0.0391
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0241,
+          "v2": -0.0247
+        }
+      },
+      {
+        "match_id": "fifwc-che-bih-2026-06-18",
+        "n": 22,
+        "cum_skill_brier": {
+          "v1": -0.0295,
+          "v2": -0.0305
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0153,
+          "v2": -0.0167
         }
       }
     ],
     "pooled": {
-      "n": 20,
+      "n": 22,
       "v1": {
-        "n": 20,
-        "skill_brier": -0.0474,
+        "n": 22,
+        "skill_brier": -0.0295,
         "skill_brier_ci": [
-          -0.1625,
-          0.0456
+          -0.1404,
+          0.0632
         ],
-        "skill_logloss": -0.0316,
+        "skill_logloss": -0.0153,
         "skill_logloss_ci": [
-          -0.1455,
-          0.0619
+          -0.1245,
+          0.075
         ]
       },
       "v2": {
-        "n": 20,
-        "skill_brier": -0.0476,
+        "n": 22,
+        "skill_brier": -0.0305,
         "skill_brier_ci": [
-          -0.1623,
-          0.0452
+          -0.1414,
+          0.0616
         ],
-        "skill_logloss": -0.0321,
+        "skill_logloss": -0.0167,
         "skill_logloss_ci": [
-          -0.1465,
-          0.0614
+          -0.126,
+          0.0733
         ]
       }
     }
