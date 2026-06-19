@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-19T11:40:37Z",
+  "generated_at": "2026-06-19T20:43:05Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1103,11 +1103,27 @@
       "team1": "United States",
       "team2": "Australia",
       "kickoff_utc": "2026-06-19T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.4502,
+          0.2746,
+          0.2752
+        ],
+        "v2": [
+          0.4489,
+          0.2748,
+          0.2763
+        ],
+        "market": [
+          0.592,
+          0.2239,
+          0.1841
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-19T18:00:05Z",
       "scored": null
     },
     {
