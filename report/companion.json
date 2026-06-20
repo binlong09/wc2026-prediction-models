@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-20T10:12:39Z",
+  "generated_at": "2026-06-20T20:23:57Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1279,12 +1279,41 @@
       "team1": "Netherlands",
       "team2": "Sweden",
       "kickoff_utc": "2026-06-20T17:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.6902,
+          0.1925,
+          0.1172
+        ],
+        "v2": [
+          0.6716,
+          0.1996,
+          0.1288
+        ],
+        "market": [
+          0.5721,
+          0.2338,
+          0.194
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-20T16:22:12Z",
+      "scored": {
+        "v1": {
+          "brier": 0.1468,
+          "logloss": 0.3707
+        },
+        "v2": {
+          "brier": 0.1643,
+          "logloss": 0.3981
+        },
+        "market": {
+          "brier": 0.2754,
+          "logloss": 0.5584
+        }
+      }
     },
     {
       "match_id": "fifwc-ger-civ-2026-06-20",
@@ -1294,11 +1323,27 @@
       "team1": "Germany",
       "team2": "Ivory Coast",
       "kickoff_utc": "2026-06-20T20:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.6502,
+          0.2072,
+          0.1427
+        ],
+        "v2": [
+          0.6372,
+          0.2115,
+          0.1513
+        ],
+        "market": [
+          0.6683,
+          0.196,
+          0.1357
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-20T19:41:46Z",
       "scored": null
     },
     {
@@ -2185,34 +2230,46 @@
           "v1": -0.0247,
           "v2": -0.0261
         }
+      },
+      {
+        "match_id": "fifwc-nld-swe-2026-06-20",
+        "n": 27,
+        "cum_skill_brier": {
+          "v1": -0.0316,
+          "v2": -0.0339
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0171,
+          "v2": -0.0195
+        }
       }
     ],
     "pooled": {
-      "n": 26,
+      "n": 27,
       "v1": {
-        "n": 26,
-        "skill_brier": -0.0403,
+        "n": 27,
+        "skill_brier": -0.0316,
         "skill_brier_ci": [
-          -0.1464,
-          0.0466
+          -0.136,
+          0.0566
         ],
-        "skill_logloss": -0.0247,
+        "skill_logloss": -0.0171,
         "skill_logloss_ci": [
-          -0.1265,
-          0.0597
+          -0.1174,
+          0.0667
         ]
       },
       "v2": {
-        "n": 26,
-        "skill_brier": -0.0415,
+        "n": 27,
+        "skill_brier": -0.0339,
         "skill_brier_ci": [
-          -0.1477,
-          0.045
+          -0.1383,
+          0.0536
         ],
-        "skill_logloss": -0.0261,
+        "skill_logloss": -0.0195,
         "skill_logloss_ci": [
-          -0.1283,
-          0.0581
+          -0.12,
+          0.0645
         ]
       }
     }
