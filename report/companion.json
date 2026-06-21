@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-21T10:39:36Z",
+  "generated_at": "2026-06-21T20:44:10Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1455,12 +1455,41 @@
       "team1": "Spain",
       "team2": "Saudi Arabia",
       "kickoff_utc": "2026-06-21T16:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team1_win",
+      "predictions": {
+        "v1": [
+          0.8794,
+          0.0961,
+          0.0245
+        ],
+        "v2": [
+          0.8721,
+          0.1008,
+          0.0271
+        ],
+        "market": [
+          0.8892,
+          0.0745,
+          0.0363
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-21T15:00:10Z",
+      "scored": {
+        "v1": {
+          "brier": 0.0244,
+          "logloss": 0.1285
+        },
+        "v2": {
+          "brier": 0.0273,
+          "logloss": 0.1369
+        },
+        "market": {
+          "brier": 0.0191,
+          "logloss": 0.1174
+        }
+      }
     },
     {
       "match_id": "fifwc-bel-irn-2026-06-21",
@@ -1470,11 +1499,27 @@
       "team1": "Belgium",
       "team2": "Iran",
       "kickoff_utc": "2026-06-21T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.4907,
+          0.2478,
+          0.2615
+        ],
+        "v2": [
+          0.4912,
+          0.2477,
+          0.2611
+        ],
+        "market": [
+          0.6985,
+          0.196,
+          0.1055
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-21T18:06:21Z",
       "scored": null
     },
     {
@@ -2349,34 +2394,46 @@
           "v1": -0.0139,
           "v2": -0.0147
         }
+      },
+      {
+        "match_id": "fifwc-esp-ksa-2026-06-21",
+        "n": 31,
+        "cum_skill_brier": {
+          "v1": -0.0308,
+          "v2": -0.0317
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0142,
+          "v2": -0.0153
+        }
       }
     ],
     "pooled": {
-      "n": 30,
+      "n": 31,
       "v1": {
-        "n": 30,
-        "skill_brier": -0.0305,
+        "n": 31,
+        "skill_brier": -0.0308,
         "skill_brier_ci": [
-          -0.1245,
-          0.0487
+          -0.1251,
+          0.0482
         ],
-        "skill_logloss": -0.0139,
+        "skill_logloss": -0.0142,
         "skill_logloss_ci": [
-          -0.103,
-          0.0622
+          -0.1049,
+          0.0614
         ]
       },
       "v2": {
-        "n": 30,
-        "skill_brier": -0.0313,
+        "n": 31,
+        "skill_brier": -0.0317,
         "skill_brier_ci": [
-          -0.1248,
-          0.0475
+          -0.1263,
+          0.0464
         ],
-        "skill_logloss": -0.0147,
+        "skill_logloss": -0.0153,
         "skill_logloss_ci": [
-          -0.1038,
-          0.061
+          -0.1061,
+          0.0597
         ]
       }
     }
