@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-21T20:44:10Z",
+  "generated_at": "2026-06-22T12:57:22Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1499,8 +1499,8 @@
       "team1": "Belgium",
       "team2": "Iran",
       "kickoff_utc": "2026-06-21T19:00:00Z",
-      "status": "live",
-      "actual_result": null,
+      "status": "final",
+      "actual_result": "draw",
       "predictions": {
         "v1": [
           0.4907,
@@ -1520,7 +1520,20 @@
       },
       "market_source": "auto",
       "captured_at": "2026-06-21T18:06:21Z",
-      "scored": null
+      "scored": {
+        "v1": {
+          "brier": 0.875,
+          "logloss": 1.3951
+        },
+        "v2": {
+          "brier": 0.8754,
+          "logloss": 1.3955
+        },
+        "market": {
+          "brier": 1.1455,
+          "logloss": 1.6297
+        }
+      }
     },
     {
       "match_id": "fifwc-ury-cvi-2026-06-21",
@@ -1530,12 +1543,41 @@
       "team1": "Uruguay",
       "team2": "Cape Verde",
       "kickoff_utc": "2026-06-21T22:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "draw",
+      "predictions": {
+        "v1": [
+          0.7663,
+          0.1596,
+          0.0741
+        ],
+        "v2": [
+          0.7529,
+          0.1659,
+          0.0812
+        ],
+        "market": [
+          0.7015,
+          0.204,
+          0.0945
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-21T21:55:51Z",
+      "scored": {
+        "v1": {
+          "brier": 1.299,
+          "logloss": 1.8352
+        },
+        "v2": {
+          "brier": 1.2692,
+          "logloss": 1.7964
+        },
+        "market": {
+          "brier": 1.1347,
+          "logloss": 1.5897
+        }
+      }
     },
     {
       "match_id": "fifwc-nzl-egy-2026-06-21",
@@ -1545,12 +1587,41 @@
       "team1": "New Zealand",
       "team2": "Egypt",
       "kickoff_utc": "2026-06-22T01:00:00Z",
-      "status": "upcoming",
-      "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
-      "scored": null
+      "status": "final",
+      "actual_result": "team2_win",
+      "predictions": {
+        "v1": [
+          0.3026,
+          0.2573,
+          0.44
+        ],
+        "v2": [
+          0.3031,
+          0.2574,
+          0.4396
+        ],
+        "market": [
+          0.1542,
+          0.2338,
+          0.6119
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-22T00:00:11Z",
+      "scored": {
+        "v1": {
+          "brier": 0.4714,
+          "logloss": 0.8209
+        },
+        "v2": {
+          "brier": 0.4722,
+          "logloss": 0.822
+        },
+        "market": {
+          "brier": 0.2291,
+          "logloss": 0.4911
+        }
+      }
     },
     {
       "match_id": "fifwc-arg-aut-2026-06-22",
@@ -2396,44 +2467,80 @@
         }
       },
       {
-        "match_id": "fifwc-esp-ksa-2026-06-21",
+        "match_id": "fifwc-bel-irn-2026-06-21",
         "n": 31,
         "cum_skill_brier": {
-          "v1": -0.0308,
-          "v2": -0.0317
+          "v1": -0.0145,
+          "v2": -0.0152
         },
         "cum_skill_logloss": {
-          "v1": -0.0142,
-          "v2": -0.0153
+          "v1": -0.0057,
+          "v2": -0.0064
+        }
+      },
+      {
+        "match_id": "fifwc-nzl-egy-2026-06-21",
+        "n": 32,
+        "cum_skill_brier": {
+          "v1": -0.0269,
+          "v2": -0.0276
+        },
+        "cum_skill_logloss": {
+          "v1": -0.016,
+          "v2": -0.0167
+        }
+      },
+      {
+        "match_id": "fifwc-esp-ksa-2026-06-21",
+        "n": 33,
+        "cum_skill_brier": {
+          "v1": -0.0271,
+          "v2": -0.028
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0162,
+          "v2": -0.0173
+        }
+      },
+      {
+        "match_id": "fifwc-ury-cvi-2026-06-21",
+        "n": 34,
+        "cum_skill_brier": {
+          "v1": -0.0337,
+          "v2": -0.033
+        },
+        "cum_skill_logloss": {
+          "v1": -0.0228,
+          "v2": -0.0226
         }
       }
     ],
     "pooled": {
-      "n": 31,
+      "n": 34,
       "v1": {
-        "n": 31,
-        "skill_brier": -0.0308,
+        "n": 34,
+        "skill_brier": -0.0337,
         "skill_brier_ci": [
-          -0.1251,
-          0.0482
+          -0.1232,
+          0.0426
         ],
-        "skill_logloss": -0.0142,
+        "skill_logloss": -0.0228,
         "skill_logloss_ci": [
-          -0.1049,
-          0.0614
+          -0.1069,
+          0.0485
         ]
       },
       "v2": {
-        "n": 31,
-        "skill_brier": -0.0317,
+        "n": 34,
+        "skill_brier": -0.033,
         "skill_brier_ci": [
-          -0.1263,
-          0.0464
+          -0.1221,
+          0.0424
         ],
-        "skill_logloss": -0.0153,
+        "skill_logloss": -0.0226,
         "skill_logloss_ci": [
-          -0.1061,
-          0.0597
+          -0.1066,
+          0.048
         ]
       }
     }
