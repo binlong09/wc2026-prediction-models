@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T10:27:12Z",
+  "generated_at": "2026-06-24T20:53:26Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -1983,11 +1983,27 @@
       "team1": "Switzerland",
       "team2": "Canada",
       "kickoff_utc": "2026-06-24T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.4111,
+          0.2794,
+          0.3096
+        ],
+        "v2": [
+          0.4114,
+          0.2793,
+          0.3093
+        ],
+        "market": [
+          0.3831,
+          0.3234,
+          0.2935
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-24T17:57:15Z",
       "scored": null
     },
     {
@@ -1998,11 +2014,27 @@
       "team1": "Bosnia and Herzegovina",
       "team2": "Qatar",
       "kickoff_utc": "2026-06-24T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.493,
+          0.2474,
+          0.2596
+        ],
+        "v2": [
+          0.4908,
+          0.2478,
+          0.2615
+        ],
+        "market": [
+          0.7186,
+          0.1658,
+          0.1156
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-24T17:57:16Z",
       "scored": null
     },
     {
