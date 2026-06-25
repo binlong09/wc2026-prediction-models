@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-25T10:19:48Z",
+  "generated_at": "2026-06-25T21:01:47Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -2247,11 +2247,27 @@
       "team1": "Curaçao",
       "team2": "Ivory Coast",
       "kickoff_utc": "2026-06-25T20:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.1488,
+          0.2205,
+          0.6307
+        ],
+        "v2": [
+          0.1452,
+          0.2188,
+          0.636
+        ],
+        "market": [
+          0.0602,
+          0.1179,
+          0.822
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-25T19:00:20Z",
       "scored": null
     },
     {
@@ -2262,11 +2278,27 @@
       "team1": "Ecuador",
       "team2": "Germany",
       "kickoff_utc": "2026-06-25T20:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.3864,
+          0.2588,
+          0.3548
+        ],
+        "v2": [
+          0.3451,
+          0.2593,
+          0.3956
+        ],
+        "market": [
+          0.191,
+          0.202,
+          0.607
+        ]
+      },
+      "market_source": "backfill",
+      "captured_at": "2026-06-25T19:00:21Z",
       "scored": null
     },
     {
