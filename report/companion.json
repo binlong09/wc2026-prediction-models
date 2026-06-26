@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-26T10:27:18Z",
+  "generated_at": "2026-06-26T20:50:54Z",
   "matches": [
     {
       "match_id": "fifwc-mex-rsa-2026-06-11",
@@ -2511,11 +2511,27 @@
       "team1": "Norway",
       "team2": "France",
       "kickoff_utc": "2026-06-26T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.2079,
+          0.2414,
+          0.5507
+        ],
+        "v2": [
+          0.214,
+          0.243,
+          0.543
+        ],
+        "market": [
+          0.1256,
+          0.1759,
+          0.6985
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-26T17:55:34Z",
       "scored": null
     },
     {
@@ -2526,11 +2542,27 @@
       "team1": "Senegal",
       "team2": "Iraq",
       "kickoff_utc": "2026-06-26T19:00:00Z",
-      "status": "upcoming",
+      "status": "live",
       "actual_result": null,
-      "predictions": {},
-      "market_source": null,
-      "captured_at": null,
+      "predictions": {
+        "v1": [
+          0.6269,
+          0.2148,
+          0.1583
+        ],
+        "v2": [
+          0.622,
+          0.2164,
+          0.1617
+        ],
+        "market": [
+          0.7889,
+          0.1357,
+          0.0754
+        ]
+      },
+      "market_source": "auto",
+      "captured_at": "2026-06-26T17:55:34Z",
       "scored": null
     },
     {
